@@ -1,0 +1,18 @@
+# Virtual environment
+env/
+
+# Django specific:
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+
+# Database
+db.sqlite3
+
+# Static files collected by Django
+/staticfiles/
+
+# VS Code settings
+.vscode/
