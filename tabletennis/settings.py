@@ -59,7 +59,7 @@ ROOT_URLCONF = 'tabletennis.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -84,6 +84,11 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+# Authentication User Model
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 
 # Password validation
@@ -126,3 +131,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# After Logout Redirect
+
+LOGOUT_REDIRECT_URL = '/'

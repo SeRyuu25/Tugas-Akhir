@@ -1,0 +1,40 @@
+body {
+    background-color: #eef3f7;
+}
+
+.custom-navbar {
+    background-color: #3a506b;
+    color: #ffffff;
+}
+
+.custom-btn {
+    background-color: #a3d9a5;
+    color: #3a506b;
+}
+
+.navbar-brand, .nav-link {
+    color: #ffffff; 
+  }
+  
+.nav-link:hover {
+    color: #d1e7ff;
+}
+
+.navbar-brand:hover {
+    color: #ffffff;
+}
+
+h1, h2 {
+    margin-bottom: 20px;
+}
+
+.container {
+    padding: 20px;
+}
+
+#profilePic {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
