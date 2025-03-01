@@ -38,3 +38,12 @@ h1, h2 {
     border-radius: 50%;
     object-fit: cover;
   }
+
+  .dropdown-item.btn {
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    padding: 0.375rem 1rem !important;  /* Adjust as needed to match other items */
+    margin: 0 !important;
+  }
+  

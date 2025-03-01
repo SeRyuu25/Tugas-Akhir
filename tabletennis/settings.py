@@ -127,6 +127,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Explicitly tell Django where to look for static files
+STATICFILES_DIRS = [
+    BASE_DIR / "static",   # Adjust this if your static folder is elsewhere
+]
+
+
+# Redirect login to homepage, instead of account/profile
+
+LOGIN_REDIRECT_URL = 'dashboard:home'
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
