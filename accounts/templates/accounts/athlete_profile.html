@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Your Athlete Profile</h2>
+
+<div class="mb-4">
+  <p><strong>Username:</strong> {{ athlete_profile.user.username }}</p>
+  <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
+</div>
+
+<div class="mb-4">
+  <h3>Upcoming Tournaments</h3>
+  <ul class="list-group">
+    {% for tournament in upcoming_tournaments %}
+      <li class="list-group-item">
+        {{ tournament.name }} - {{ tournament.start_date }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">No upcoming tournaments.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="mb-4">
+  <h3>Finished Tournaments</h3>
+  <ul class="list-group">
+    {% for tournament in finished_tournaments %}
+      <li class="list-group-item">
+        {{ tournament.name }} - {{ tournament.start_date }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">No finished tournaments.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="mb-4">
+  <h3>Your Match Records</h3>
+  <ul class="list-group">
+    {% for match in matches %}
+      <li class="list-group-item">
+        {{ match.athlete1.user.username }} {{ match.score1 }} - {{ match.score2 }} {{ match.athlete2.user.username }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">No match records found.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

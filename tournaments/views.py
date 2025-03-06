@@ -1,10 +1,33 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .forms import TournamentForm
 from .models import Tournament, Match
 from accounts.models import AthleteProfile
 from ratings.elo import process_match
 from ratings.models import RatingHistory
 
 # Create your views here.
+
+def tournament_list(request):
+    tournaments = Tournament.objects.order_by('-created_at')
+    return render(request, 'tournaments/tournament_list.html', {
+        'tournaments': tournaments
+    })
+
+def is_ip_or_admin(user):
+    return user.is_authenticated and (user.role == 'ip' or user.is_superuser or user.role == 'admin')
+
+@login_required
+@user_passes_test(is_ip_or_admin)
+def create_tournament(request):
+    if request.method == 'POST':
+        form = TournamentForm(request.POST)
+        if form.is_valid():
+            tournament = form.save()
+            return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+    else:
+        form = TournamentForm()
+    return render(request, 'tournaments/create_tournament.html', {'form': form})
 
 def tournament_detail(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)

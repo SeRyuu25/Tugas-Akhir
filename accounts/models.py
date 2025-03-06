@@ -29,3 +29,26 @@ class AthleteProfile(models.Model):
 
     def __str__(self):
         return f"Profile Atlet untuk {self.user.username}"
+
+class IPRatingOpinion(models.Model):
+    ip_account = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'ip'},
+        related_name='rating_opinions'
+    )
+    # A general identifier (e.g., athlete's name or email) for the athlete
+    athlete_identifier = models.CharField(max_length=255)
+    # Optional link if the athlete is registered
+    athlete = models.ForeignKey(
+        AthleteProfile,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='ip_opinions'
+    )
+    opinion_rating = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.ip_account.username} -> {self.athlete_identifier}: {self.opinion_rating}"

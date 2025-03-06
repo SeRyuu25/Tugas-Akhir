@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Your IP Profile</h2>
+
+<div class="mb-4">
+  <p><strong>Username:</strong> {{ request.user.username }}</p>
+</div>
+
+<div class="mb-4">
+  <h3>Tournaments You Host</h3>
+  <ul class="list-group">
+    {% for tournament in tournaments_hosted %}
+      <li class="list-group-item">
+        <a href="{% url 'tournaments:tournament_detail' tournament.id %}">
+          {{ tournament.name }}
+        </a>
+        - {{ tournament.start_date }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">You are not hosting any tournaments.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="mb-4">
+  <h3>Registered Athletes Pending Initial Rating</h3>
+  <ul class="list-group">
+    {% for athlete in pending_athletes %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          <a href="{% url 'accounts:public_profile' athlete.id %}">
+            {{ athlete.user.username }}
+          </a>
+        </span>
+        <a href="{% url 'accounts:rate_athlete' athlete.id %}" class="btn btn-sm btn-primary">Rate</a>
+      </li>
+    {% empty %}
+      <li class="list-group-item">No pending registered athletes.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="mb-4">
+  <h3>Manual Athlete Opinions (Not Linked)</h3>
+  <ul class="list-group">
+    {% for opinion in manual_opinions %}
+      <li class="list-group-item">
+        <strong>Athlete:</strong> {{ opinion.athlete_identifier }} — <strong>Opinion:</strong> {{ opinion.opinion_rating }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">No manual opinions recorded.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

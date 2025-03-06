@@ -25,10 +25,10 @@
                 <a class="nav-link" href="{% url 'dashboard:home' %}">Home</a>
               </li>
               <li class="nav-item m-2">
-                <a class="nav-link" href="{% url 'dashboard:home' %}">Events</a>
+                <a class="nav-link" href="{% url 'tournaments:tournament_list' %}">Events</a>
               </li>
               <li class="nav-item m-2">
-                <a class="nav-link" href="{% url 'dashboard:home' %}">Rankings</a>
+                <a class="nav-link" href="{% url 'dashboard:athlete_ranking' %}">Rankings</a>
               </li>
               {% if user.is_authenticated %}
                 <li class="nav-item dropdown m-2" id="profileDropdown">
@@ -43,7 +43,7 @@
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                     <li><span class="dropdown-item-text">Hello, {{ user.username }}!</span></li>
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Profile</a></li>
                     {% if user.is_superuser or user.role == 'admin' %}
                       <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Dashboard</a></li>
                       <li><a class="dropdown-item" href="{% url 'accounts:create_ip_account' %}">Buat IP Baru</a></li>

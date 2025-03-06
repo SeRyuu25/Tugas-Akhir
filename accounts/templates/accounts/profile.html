@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2>Your Profile</h2>
+  <div class="card">
+    <div class="card-body">
+      <p><strong>Username:</strong> {{ request.user.username }}</p>
+      <p><strong>Email:</strong> {{ request.user.email }}</p>
+      <p><strong>Role:</strong> {{ request.user.get_role_display }}</p>
+      {% if request.user.profile_image %}
+        <img src="{{ request.user.profile_image.url }}" alt="Profile Image" style="width: 150px; height: 150px; border-radius: 50%;">
+      {% else %}
+        <img src="{% static 'images/default_profile.jpg' %}" alt="Default Profile Image" style="width: 150px; height: 150px; border-radius: 50%;">
+      {% endif %}
+      <!-- Add additional info if needed -->
+    </div>
+  </div>
+</div>
+{% endblock %}

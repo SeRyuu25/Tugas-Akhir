@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
+from .models import CustomUser, IPRatingOpinion
 
 # Buat registrasi Atlet aja
 class AthleteAccountCreationForm(UserCreationForm):
@@ -30,3 +30,9 @@ class IPAccountCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+# Buat masukin initial rating dari IP
+class IPRatingOpinionForm(forms.ModelForm):
+    class Meta:
+        model = IPRatingOpinion
+        fields = ['opinion_rating']

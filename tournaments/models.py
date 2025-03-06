@@ -1,11 +1,18 @@
 from django.db import models
-from accounts.models import AthleteProfile
+from accounts.models import AthleteProfile, CustomUser
 
 # Create your models here.
 
 class Tournament(models.Model):
     name = models.CharField(max_length=100)
     start_date = models.DateField()
+    # Ini field buat reference siapa yg bikin (IP account yg mana)
+    host = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        limit_choices_to={'role': 'ip'}
+    )
+    participants = models.ManyToManyField(AthleteProfile, related_name='tournaments', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     # Nanti bisa ditambah desc laen kyk lokasi dll
 

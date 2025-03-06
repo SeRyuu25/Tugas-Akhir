@@ -2,6 +2,36 @@
 {% load static %}
 
 {% block content %}
-<h2>Welcome to the Dashboard!</h2>
-<p>Ini landing page buat web aplikasinya.</p>
+<div class="my-4">
+  <h2>Welcome to the Dashboard</h2>
+  <hr>
+  
+  <div class="row">
+    <div class="col-md-6">
+      <h3>Upcoming Tournaments</h3>
+      <ul class="list-group">
+        {% for tournament in tournaments %}
+          <li class="list-group-item">
+            <strong>{{ tournament.name }}</strong><br>
+            Start Date: {{ tournament.start_date }}
+          </li>
+        {% empty %}
+          <li class="list-group-item">No tournaments scheduled.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h3>Top Athletes</h3>
+      <ul class="list-group">
+        {% for athlete in top_athletes %}
+          <li class="list-group-item">
+            {{ athlete.user.username }} - Rating: {{ athlete.current_rating }}
+          </li>
+        {% empty %}
+          <li class="list-group-item">No athlete data available.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
 {% endblock %}

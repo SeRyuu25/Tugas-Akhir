@@ -1,0 +1,14 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+  {{ block.super }}
+  <h2>Upcoming Tournaments</h2>
+  <ul>
+    {% for tournament in tournaments %}
+      <li>{{ tournament.name }} - {{ tournament.start_date }}</li>
+    {% empty %}
+      <li>No tournaments available.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
