@@ -1,0 +1,24 @@
+.{% extends "base.html" %}
+{% block content %}
+  <h2>Record Match for Tournament {{ tournament_id }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="athlete1">Athlete 1 ID:</label>
+      <input type="number" name="athlete1" id="athlete1" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="athlete2">Athlete 2 ID:</label>
+      <input type="number" name="athlete2" id="athlete2" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="score1">Score 1:</label>
+      <input type="number" name="score1" id="score1" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="score2">Score 2:</label>
+      <input type="number" name="score2" id="score2" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-success">Submit Match</button>
+  </form>
+{% endblock %}

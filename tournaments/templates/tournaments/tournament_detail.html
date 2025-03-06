@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ tournament.name }}</h2>
+<p>Start Date: {{ tournament.start_date }}</p>
+
+<h3>Bracket</h3>
+<div class="bracket">
+  {% for round, matches in rounds.items %}
+    <div class="round">
+      <h4>Round {{ round }}</h4>
+      <ul class="list-group">
+        {% for match in matches %}
+          <li class="list-group-item">
+            {{ match.athlete1.user.username }} ({{ match.score1 }}) vs 
+            {{ match.athlete2.user.username }} ({{ match.score2 }})
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+
+<a href="{% url 'tournaments:record_match' tournament.id %}" class="btn btn-primary mt-3">Record a Match</a>
+{% endblock %}

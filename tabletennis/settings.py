@@ -147,3 +147,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # After Logout Redirect
 
 LOGOUT_REDIRECT_URL = '/'
+
+
+# For media (profile picture dll)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# For Development Purpose only!!!!!!
+
+AUTH_PASSWORD_VALIDATORS = []  # This is for bypass validator when creating password!!
