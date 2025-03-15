@@ -36,3 +36,8 @@ class IPRatingOpinionForm(forms.ModelForm):
     class Meta:
         model = IPRatingOpinion
         fields = ['opinion_rating']
+
+class ManualIPOpinionForm(forms.ModelForm):
+    class Meta:
+        model = IPRatingOpinion
+        fields = ['athlete_identifier', 'opinion_rating']

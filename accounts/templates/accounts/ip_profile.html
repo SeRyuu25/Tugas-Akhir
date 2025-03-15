@@ -44,6 +44,7 @@
 
 <div class="mb-4">
   <h3>Manual Athlete Opinions (Not Linked)</h3>
+  <a href="{% url 'accounts:create_manual_rating' %}" class="btn btn-secondary mb-3">Create Manual Rating</a>
   <ul class="list-group">
     {% for opinion in manual_opinions %}
       <li class="list-group-item">

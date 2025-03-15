@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import register, create_ip_account, profile, rate_athlete, public_profile
+from .views import register, create_ip_account, profile, rate_athlete, public_profile, create_manual_rating, admin_finalize_ratings, finalize_rating_admin
 
 app_name = 'accounts' 
 
@@ -13,4 +13,7 @@ urlpatterns = [
     path('public_profile/<int:athlete_id>/', public_profile, name='public_profile'),
     path('create-ip/', create_ip_account, name='create_ip_account'),
     path('rate/<int:athlete_id>/', rate_athlete, name='rate_athlete'),
+    path('manual_rating/', create_manual_rating, name='create_manual_rating'),
+    path('admin_finalize_ratings/', admin_finalize_ratings, name='admin_finalize_ratings'),
+    path('finalize_rating_admin/<int:athlete_id>/', finalize_rating_admin, name='finalize_rating_admin'),
 ]

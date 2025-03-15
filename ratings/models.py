@@ -4,6 +4,7 @@ from tournaments.models import Match
 
 # Create your models here.
 
+# Model buat nyimpen history perubahan rating
 class RatingHistory(models.Model):
     athlete = models.ForeignKey(AthleteProfile, on_delete=models.CASCADE, related_name='rating_history')
     match = models.ForeignKey(Match, on_delete=models.SET_NULL, null=True, blank=True)

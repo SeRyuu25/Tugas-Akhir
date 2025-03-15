@@ -11,4 +11,12 @@
       <li>No tournaments available.</li>
     {% endfor %}
   </ul>
+  <h2>Recent IP Rating Opinions</h2>
+  <ul>
+    {% for opinion in recent_ip_opinions %}
+      <li>{{ opinion.ip_account.username }} rated {{ opinion.athlete_identifier }}: {{ opinion.opinion_rating }}</li>
+    {% empty %}
+      <li>No opinions recorded.</li>
+    {% endfor %}
+  </ul>
 {% endblock %}

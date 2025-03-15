@@ -4,6 +4,7 @@ from .models import CustomUser, AthleteProfile
 
 # Register your models here.
 
+# Buat bikin custom admin view di admin:index (alias dashboard admin)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser')

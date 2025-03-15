@@ -3,6 +3,7 @@ from accounts.models import AthleteProfile, CustomUser
 
 # Create your models here.
 
+# Model database Turney
 class Tournament(models.Model):
     name = models.CharField(max_length=100)
     start_date = models.DateField()
@@ -12,6 +13,7 @@ class Tournament(models.Model):
         null=True, blank=True,
         limit_choices_to={'role': 'ip'}
     )
+    player_limit = models.IntegerField(choices=[(8, '8 players'), (16, '16 players')], default=8)
     participants = models.ManyToManyField(AthleteProfile, related_name='tournaments', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     # Nanti bisa ditambah desc laen kyk lokasi dll
@@ -19,6 +21,7 @@ class Tournament(models.Model):
     def __str__(self):
         return self.name
 
+# Model database pertandingan
 class Match(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
     athlete1 = models.ForeignKey(AthleteProfile, on_delete=models.CASCADE, related_name='matches_as_athlete1')

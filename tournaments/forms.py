@@ -3,10 +3,11 @@ from .models import Tournament
 import datetime
 from django.core.exceptions import ValidationError
 
+# Form buat bikin Turney baru
 class TournamentForm(forms.ModelForm):
     class Meta:
         model = Tournament
-        fields = ['name', 'start_date']  # Nanti bisa ditambah fieldnya klo kurang
+        fields = ['name', 'start_date', 'player_limit']  # Nanti bisa ditambah fieldnya klo kurang
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
         }

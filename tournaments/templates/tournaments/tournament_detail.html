@@ -1,24 +1,53 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-<h2>{{ tournament.name }}</h2>
-<p>Start Date: {{ tournament.start_date }}</p>
+<div class="container my-4">
+  <h2>{{ tournament.name }}</h2>
+  <p>Start Date: {{ tournament.start_date }}</p>
+  <p>Player Limit: {{ tournament.player_limit }}</p>
+  
+  {% if user.is_authenticated and user.role == 'atlet' %}
+    <!-- Show registration button only for athlete accounts -->
+    {% if tournament.participants.count < tournament.player_limit %}
+      <a href="{% url 'tournaments:register_for_tournament' tournament.id %}" class="btn btn-success mb-3">Register for Tournament</a>
+    {% else %}
+      <p class="alert alert-info">Tournament registration is closed.</p>
+    {% endif %}
+  {% endif %}
 
-<h3>Bracket</h3>
-<div class="bracket">
-  {% for round, matches in rounds.items %}
-    <div class="round">
-      <h4>Round {{ round }}</h4>
-      <ul class="list-group">
+  <h3>Registered Athletes</h3>
+  <div class="row">
+    {% for athlete in tournament.participants.all %}
+      <div class="col-md-6 mb-3">
+        <div class="d-flex align-items-center">
+          <img src="{% if athlete.user.profile_image %}{{ athlete.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" alt="{{ athlete.user.username }}" class="rounded-circle me-2" style="width:50px; height:50px;">
+          <span>{{ athlete.user.username }}</span>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <p>No athletes registered yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+  
+  <div class="bracket-container">
+    {% for round_number, matches in rounds.items %}
+      <div class="bracket-round round-{{ round_number }}">
+        <h4>Round {{ round_number }}</h4>
         {% for match in matches %}
-          <li class="list-group-item">
-            {{ match.athlete1.user.username }} ({{ match.score1 }}) vs 
-            {{ match.athlete2.user.username }} ({{ match.score2 }})
-          </li>
+          <div class="bracket-match">
+            <div class="bracket-player top">
+              {{ match.athlete1.user.username }} ({{ match.score1 }})
+            </div>
+            <div class="bracket-player bottom">
+              {{ match.athlete2.user.username }} ({{ match.score2 }})
+            </div>
+          </div>
         {% endfor %}
-      </ul>
-    </div>
-  {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
 </div>
-
-<a href="{% url 'tournaments:record_match' tournament.id %}" class="btn btn-primary mt-3">Record a Match</a>
 {% endblock %}

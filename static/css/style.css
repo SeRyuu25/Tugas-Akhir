@@ -51,11 +51,15 @@ h1, h2 {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
+    justify-content: center;
   }
+
   .round {
     flex: 1;
     min-width: 200px;
+    margin: 10px;
   }
+
   .round h4 {
     text-align: center;
   }

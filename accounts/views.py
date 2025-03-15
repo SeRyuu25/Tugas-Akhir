@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
-from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.utils import timezone
+from django.db.models import Q, Avg
+from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm
 from tournaments.models import Tournament, Match
 from accounts.models import AthleteProfile, IPRatingOpinion
-from django.utils import timezone
-from django.db.models import Q
 
 # Create your views here.
 
@@ -75,7 +76,7 @@ def profile(request):
     elif user.role == 'ip':
         # For IP accounts: show tournaments hosted by the IP, pending registered athletes, and manual opinions.
         tournaments_hosted = Tournament.objects.filter(host=user)
-        pending_athletes = AthleteProfile.objects.filter(initial_rating_finalized=False)
+        pending_athletes = AthleteProfile.objects.filter(initial_rating_finalized=False).exclude(ip_opinions__ip_account=request.user)
         manual_opinions = IPRatingOpinion.objects.filter(ip_account=user, athlete__isnull=True)
         context = {
             'tournaments_hosted': tournaments_hosted,
@@ -89,7 +90,6 @@ def profile(request):
 
 # Buat Profile yang bisa diliat publik
 def public_profile(request, athlete_id):
-    # Retrieve the AthleteProfile for the given athlete_id
     athlete = get_object_or_404(AthleteProfile, id=athlete_id)
     return render(request, 'accounts/public_profile.html', {'athlete': athlete})
 
@@ -99,6 +99,9 @@ def public_profile(request, athlete_id):
 def rate_athlete(request, athlete_id):
     # For a registered athlete (AthleteProfile), allow the IP to submit an opinion.
     athlete = get_object_or_404(AthleteProfile, id=athlete_id)
+    if IPRatingOpinion.objects.filter(ip_account=request.user, athlete=athlete).exists():
+        messages.error(request, "You have already submitted a rating for this athlete.")
+        return redirect('accounts:profile')
     if request.method == 'POST':
         form = IPRatingOpinionForm(request.POST)
         if form.is_valid():
@@ -107,7 +110,80 @@ def rate_athlete(request, athlete_id):
             opinion.athlete = athlete  # link the opinion
             opinion.athlete_identifier = athlete.user.username  # auto-fill identifier
             opinion.save()
-            return redirect('accounts:ip_profile')
+            messages.success(request, "Your rating opinion has been submitted.")
+            # Check if we have 3 or more opinions now
+            total_opinions = IPRatingOpinion.objects.filter(athlete=athlete).count()
+            # Ini kalo buat automatic finalized
+            # if total_opinions >= 3 and not athlete.initial_rating_finalized:
+            #     finalize_initial_rating(athlete)
+            #     messages.info(request, f"Athlete {athlete.user.username}'s rating has been auto-finalized.")
+            return redirect('accounts:profile')
     else:
         form = IPRatingOpinionForm(initial={'athlete_identifier': athlete.user.username})
     return render(request, 'accounts/rate_athlete.html', {'form': form, 'athlete': athlete})
+
+@login_required
+@user_passes_test(is_ip)
+def create_manual_rating(request):
+    if request.method == 'POST':
+        form = ManualIPOpinionForm(request.POST)
+        if form.is_valid():
+            opinion = form.save(commit=False)
+            opinion.ip_account = request.user
+            opinion.save()
+            messages.success(request, "Your manual rating has been recorded.")
+            return redirect('accounts:profile')
+    else:
+        form = ManualIPOpinionForm()
+    return render(request, 'accounts/create_manual_rating.html', {'form': form})
+
+
+def finalize_initial_rating(athlete):
+    """
+    Averages all IP opinions linked to this athlete, updates athlete's current_rating,
+    and sets initial_rating_finalized=True.
+    Returns a message describing the result.
+    """
+    # Get all opinions referencing this athlete
+    opinions = athlete.ip_opinions.all()
+    if not opinions.exists():
+        return "No IP opinions found for this athlete."
+    
+    # Calculate average rating from the 'opinion_rating' field
+    avg_rating = opinions.aggregate(Avg('opinion_rating'))['opinion_rating__avg']
+    if avg_rating is None:
+        return "Could not calculate average rating."
+    
+    # Update athlete's current_rating and mark as finalized
+    athlete.current_rating = round(avg_rating)
+    athlete.initial_rating_finalized = True
+    athlete.save()
+    
+    return f"Initial rating finalized at {athlete.current_rating}."
+
+# Buat admin profile -> ngasih list yg blom finalized
+@login_required
+@user_passes_test(is_admin)
+def admin_finalize_ratings(request):
+    # Get all AthleteProfile objects that have not been finalized
+    athletes = AthleteProfile.objects.filter(initial_rating_finalized=False)
+    context = {
+        'athletes': athletes,
+    }
+    return render(request, 'accounts/admin_finalize_ratings.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def finalize_rating_admin(request, athlete_id):
+    athlete = get_object_or_404(AthleteProfile, id=athlete_id, initial_rating_finalized=False)
+    # Get the average of all IP opinions linked to this athlete
+    opinions = athlete.ip_opinions.all()
+    if opinions.exists():
+        avg_rating = opinions.aggregate(Avg('opinion_rating'))['opinion_rating__avg']
+        athlete.current_rating = round(avg_rating)
+        athlete.initial_rating_finalized = True
+        athlete.save()
+        messages.success(request, f"Initial rating finalized for {athlete.user.username} at {athlete.current_rating}.")
+    else:
+        messages.error(request, "No IP opinions available for this athlete.")
+    return redirect('accounts:admin_finalize_ratings')

@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
-# Buat database general user
+# Buat database general user (semua user)
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('admin', 'Admin'),
@@ -52,3 +52,7 @@ class IPRatingOpinion(models.Model):
 
     def __str__(self):
         return f"{self.ip_account.username} -> {self.athlete_identifier}: {self.opinion_rating}"
+    
+    class Meta:
+        # When an opinion is linked to a registered athlete, the combination of ip_account and athlete must be unique.
+        unique_together = (('ip_account', 'athlete'),)
