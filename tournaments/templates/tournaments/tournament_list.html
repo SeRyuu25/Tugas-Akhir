@@ -3,19 +3,34 @@
 
 {% block content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Upcoming Tournaments</h2>
+    <h1>Tournament List</h1>
+
     {% if user.is_authenticated and user.role == 'ip' %}
       <a href="{% url 'tournaments:create' %}" class="btn btn-success">Create New Tournament</a>
     {% endif %}
   </div>
-  <div class="list-group">
-    {% for tournament in tournaments %}
+  
+  <h2>Upcoming Tournaments</h2>
+  <div class="list-group mb-5">
+    {% for tournament in upcoming_tournaments %}
       <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
         <h5 class="mb-1">{{ tournament.name }}</h5>
         <p class="mb-1">Start Date: {{ tournament.start_date }}</p>
       </a>
     {% empty %}
-      <p>No tournaments available.</p>
+      <p>No upcoming tournaments available.</p>
+    {% endfor %}
+  </div>
+
+  <h2>Finished Tournaments</h2>
+  <div class="list-group">
+    {% for tournament in finished_tournaments %}
+      <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
+        <h5 class="mb-1">{{ tournament.name }}</h5>
+        <p class="mb-1">{{ tournament.start_date }}</p>
+      </a>
+    {% empty %}
+      <p>No finished tournaments available.</p>
     {% endfor %}
   </div>
 {% endblock %}

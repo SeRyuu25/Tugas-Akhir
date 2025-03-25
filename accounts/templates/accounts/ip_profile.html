@@ -2,57 +2,74 @@
 {% load static %}
 
 {% block content %}
-<h2>Your IP Profile</h2>
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h2>Your IP Profile</h2>
+    <a href="{% url 'accounts:update_profile' %}" class="btn btn-secondary">Edit Profile</a>
+  </div>
 
-<div class="mb-4">
-  <p><strong>Username:</strong> {{ request.user.username }}</p>
-</div>
+  <!-- White card for profile image + username -->
+  <div class="card mt-3">
+    <div class="card-body">
+      {% if request.user.profile_image %}
+        <img src="{{ request.user.profile_image.url }}" 
+             alt="Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% else %}
+        <img src="{% static 'images/default_profile.jpg' %}" 
+             alt="Default Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% endif %}
+      <p><strong>Username:</strong> {{ request.user.username }}</p>
+    </div>
+  </div>
 
-<div class="mb-4">
-  <h3>Tournaments You Host</h3>
-  <ul class="list-group">
-    {% for tournament in tournaments_hosted %}
-      <li class="list-group-item">
-        <a href="{% url 'tournaments:tournament_detail' tournament.id %}">
-          {{ tournament.name }}
-        </a>
-        - {{ tournament.start_date }}
-      </li>
-    {% empty %}
-      <li class="list-group-item">You are not hosting any tournaments.</li>
-    {% endfor %}
-  </ul>
-</div>
-
-<div class="mb-4">
-  <h3>Registered Athletes Pending Initial Rating</h3>
-  <ul class="list-group">
-    {% for athlete in pending_athletes %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-          <a href="{% url 'accounts:public_profile' athlete.id %}">
-            {{ athlete.user.username }}
+  <div class="mb-4 mt-4">
+    <h3>Tournaments You Host</h3>
+    <ul class="list-group">
+      {% for tournament in tournaments_hosted %}
+        <li class="list-group-item">
+          <a href="{% url 'tournaments:tournament_detail' tournament.id %}">
+            {{ tournament.name }}
           </a>
-        </span>
-        <a href="{% url 'accounts:rate_athlete' athlete.id %}" class="btn btn-sm btn-primary">Rate</a>
-      </li>
-    {% empty %}
-      <li class="list-group-item">No pending registered athletes.</li>
-    {% endfor %}
-  </ul>
-</div>
+          - {{ tournament.start_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">You are not hosting any tournaments.</li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="mb-4">
-  <h3>Manual Athlete Opinions (Not Linked)</h3>
-  <a href="{% url 'accounts:create_manual_rating' %}" class="btn btn-secondary mb-3">Create Manual Rating</a>
-  <ul class="list-group">
-    {% for opinion in manual_opinions %}
-      <li class="list-group-item">
-        <strong>Athlete:</strong> {{ opinion.athlete_identifier }} — <strong>Opinion:</strong> {{ opinion.opinion_rating }}
-      </li>
-    {% empty %}
-      <li class="list-group-item">No manual opinions recorded.</li>
-    {% endfor %}
-  </ul>
+  <div class="mb-4">
+    <h3>Registered Athletes Pending Initial Rating</h3>
+    <ul class="list-group">
+      {% for athlete in pending_athletes %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>
+            <a href="{% url 'accounts:public_profile' athlete.id %}">
+              {{ athlete.user.username }}
+            </a>
+          </span>
+          <a href="{% url 'accounts:rate_athlete' athlete.id %}" class="btn btn-sm btn-primary">Rate</a>
+        </li>
+      {% empty %}
+        <li class="list-group-item">No pending registered athletes.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="mb-4">
+    <h3>Manual Athlete Opinions (Not Linked)</h3>
+    <a href="{% url 'accounts:create_manual_rating' %}" class="btn btn-secondary mb-3">Create Manual Rating</a>
+    <ul class="list-group">
+      {% for opinion in manual_opinions %}
+        <li class="list-group-item">
+          <strong>Athlete:</strong> {{ opinion.athlete_identifier }} — <strong>Opinion:</strong> {{ opinion.opinion_rating }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No manual opinions recorded.</li>
+      {% endfor %}
+    </ul>
+  </div>
 </div>
 {% endblock %}

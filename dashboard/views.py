@@ -7,7 +7,7 @@ from accounts.models import AthleteProfile
 # View buat ngasih liat home alias dashboard
 def home(request):
     # Ambil list turnament yg deket (order by start_date)
-    tournaments = Tournament.objects.order_by('start_date')[:5]
+    tournaments = Tournament.objects.filter(is_finished=False).order_by('start_date')[:5]
     # Ambil list top atlet (berdasarkan current_rating)
     top_athletes = AthleteProfile.objects.order_by('-current_rating')[:5]
     return render(request, 'dashboard/home.html', {

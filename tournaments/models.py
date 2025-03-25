@@ -16,6 +16,7 @@ class Tournament(models.Model):
     player_limit = models.IntegerField(choices=[(8, '8 players'), (16, '16 players')], default=8)
     participants = models.ManyToManyField(AthleteProfile, related_name='tournaments', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_finished = models.BooleanField(default=False)
     # Nanti bisa ditambah desc laen kyk lokasi dll
 
     def __str__(self):
@@ -33,3 +34,29 @@ class Match(models.Model):
 
     def __str__(self):
         return f"Round {self.round}: {self.athlete1.user.username} vs {self.athlete2.user.username}"
+    
+# Buat ngasih label ke html page turnamen detail
+def round_label(round_number, player_limit):
+    """
+    Maps the integer round to a human-readable label.
+    For an 8-player tournament: 3 rounds -> R1=Round of 8, R2=Semifinal, R3=Final
+    For a 16-player tournament: 4 rounds -> R1=Round of 16, R2=Round of 8, R3=Semifinal, R4=Final
+    """
+    if player_limit == 8:
+        mapping = {
+            1: "Round of 8",
+            2: "Semifinal",
+            3: "Final"
+        }
+    elif player_limit == 16:
+        mapping = {
+            1: "Round of 16",
+            2: "Round of 8",
+            3: "Semifinal",
+            4: "Final"
+        }
+    else:
+        # Fallback or a more generic approach
+        mapping = {round_number: f"Round {round_number}"}
+    
+    return mapping.get(round_number, f"Round {round_number}")

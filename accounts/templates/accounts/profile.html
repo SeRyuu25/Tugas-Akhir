@@ -3,18 +3,26 @@
 
 {% block content %}
 <div class="container my-4">
-  <h2>Your Profile</h2>
-  <div class="card">
+  <div class="d-flex justify-content-between align-items-center">
+    <h2>Your Profile</h2>
+    <a href="{% url 'accounts:update_profile' %}" class="btn btn-secondary">Edit Profile</a>
+  </div>
+  <div class="card mt-3">
     <div class="card-body">
+      <!-- Profile Picture on the left, just above the username -->
+      {% if request.user.profile_image %}
+        <img src="{{ request.user.profile_image.url }}" 
+             alt="Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% else %}
+        <img src="{% static 'images/default_profile.jpg' %}" 
+             alt="Default Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% endif %}
+
       <p><strong>Username:</strong> {{ request.user.username }}</p>
       <p><strong>Email:</strong> {{ request.user.email }}</p>
       <p><strong>Role:</strong> {{ request.user.get_role_display }}</p>
-      {% if request.user.profile_image %}
-        <img src="{{ request.user.profile_image.url }}" alt="Profile Image" style="width: 150px; height: 150px; border-radius: 50%;">
-      {% else %}
-        <img src="{% static 'images/default_profile.jpg' %}" alt="Default Profile Image" style="width: 150px; height: 150px; border-radius: 50%;">
-      {% endif %}
-      <!-- Add additional info if needed -->
 
       {% if request.user.is_superuser or request.user.role == 'admin' %}
         <div class="mt-3">

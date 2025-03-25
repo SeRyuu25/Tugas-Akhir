@@ -2,49 +2,126 @@
 {% load static %}
 
 {% block content %}
-<h2>Your Athlete Profile</h2>
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h2>Your Athlete Profile</h2>
+    <a href="{% url 'accounts:update_profile' %}" class="btn btn-secondary">Edit Profile</a>
+  </div>
 
-<div class="mb-4">
-  <p><strong>Username:</strong> {{ athlete_profile.user.username }}</p>
-  <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
-</div>
+  <!-- White card for profile image + username -->
+  <div class="card mt-3">
+    <div class="card-body">
+      {% if athlete_profile.user.profile_image %}
+        <img src="{{ athlete_profile.user.profile_image.url }}" 
+             alt="Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% else %}
+        <img src="{% static 'images/default_profile.jpg' %}" 
+             alt="Default Profile Image" 
+             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+      {% endif %}
+      <p><strong>Username:</strong> {{ athlete_profile.user.username }}</p>
+      <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
+    </div>
+  </div>
 
-<div class="mb-4">
-  <h3>Upcoming Tournaments</h3>
-  <ul class="list-group">
-    {% for tournament in upcoming_tournaments %}
-      <li class="list-group-item">
-        {{ tournament.name }} - {{ tournament.start_date }}
-      </li>
-    {% empty %}
-      <li class="list-group-item">No upcoming tournaments.</li>
-    {% endfor %}
-  </ul>
-</div>
+  <div class="mb-4 mt-4">
+    <h3>Upcoming Tournaments</h3>
+    <ul class="list-group">
+      {% for tournament in upcoming_tournaments %}
+        <li class="list-group-item">
+          {{ tournament.name }} - {{ tournament.start_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No upcoming tournaments.</li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="mb-4">
-  <h3>Finished Tournaments</h3>
-  <ul class="list-group">
-    {% for tournament in finished_tournaments %}
-      <li class="list-group-item">
-        {{ tournament.name }} - {{ tournament.start_date }}
-      </li>
-    {% empty %}
-      <li class="list-group-item">No finished tournaments.</li>
-    {% endfor %}
-  </ul>
-</div>
+  <div class="mb-4">
+    <h3>Finished Tournaments</h3>
+    <ul class="list-group">
+      {% for tournament in finished_tournaments %}
+        <li class="list-group-item">
+          {{ tournament.name }} - {{ tournament.start_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No finished tournaments.</li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="mb-4">
-  <h3>Your Match Records</h3>
-  <ul class="list-group">
+  <div class="mb-4">
+    <h3>Your Match Records</h3>
     {% for match in matches %}
-      <li class="list-group-item">
-        {{ match.athlete1.user.username }} {{ match.score1 }} - {{ match.score2 }} {{ match.athlete2.user.username }}
-      </li>
+      {% if match.score1 != 0 or match.score2 != 0 %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">
+              {% comment %}
+                Determine if the current athlete (athlete_profile) is athlete1 or athlete2,
+                so they always appear on the left side. Then highlight the winner's score.
+              {% endcomment %}
+              {% if match.athlete1 == athlete_profile %}
+                {% if match.score1 > match.score2 %}
+                  <span>
+                    {{ match.athlete1.user.username }}
+                    <span class="text-primary fw-bold"> {{ match.score1 }}</span>
+                  </span>
+                  - {{ match.score2 }} {{ match.athlete2.user.username }}
+                {% elif match.score2 > match.score1 %}
+                  <span>
+                    {{ match.athlete1.user.username }} {{ match.score1 }}
+                  </span>
+                  - <span>
+                      <span class="text-primary fw-bold">{{ match.score2 }}</span>
+                      {{ match.athlete2.user.username }}
+                    </span>
+                {% else %}
+                  {{ match.athlete1.user.username }} {{ match.score1 }}
+                  - {{ match.score2 }} {{ match.athlete2.user.username }}
+                {% endif %}
+              {% else %}
+                {% if match.score2 > match.score1 %}
+                  <span>
+                    {{ match.athlete2.user.username }}
+                    <span class="text-primary fw-bold"> {{ match.score2 }}</span>
+                  </span>
+                  - {{ match.score1 }} {{ match.athlete1.user.username }}
+                {% elif match.score1 > match.score2 %}
+                  <span>
+                    {{ match.athlete2.user.username }} {{ match.score2 }}
+                  </span>
+                  - <span>
+                      <span class="text-primary fw-bold">{{ match.score1 }}</span>
+                      {{ match.athlete1.user.username }}
+                    </span>
+                {% else %}
+                  {{ match.athlete2.user.username }} {{ match.score2 }}
+                  - {{ match.score1 }} {{ match.athlete1.user.username }}
+                {% endif %}
+              {% endif %}
+            </h5>                    
+            {% for rh in match.ratinghistory_set.all %}
+              {% if rh.athlete == athlete_profile %}
+                <p class="card-text">
+                  Rating change: {{ rh.rating_before }} → {{ rh.rating_after }}
+                  {% if rh.rating_change > 0 %}
+                    <span class="text-success">(+{{ rh.rating_change }})</span>
+                  {% elif rh.rating_change < 0 %}
+                    <span class="text-danger">({{ rh.rating_change }})</span>
+                  {% else %}
+                    <span class="text-body">(0)</span>
+                  {% endif %}
+                </p>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     {% empty %}
       <li class="list-group-item">No match records found.</li>
     {% endfor %}
-  </ul>
+  </div>
 </div>
 {% endblock %}

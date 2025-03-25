@@ -1,9 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
+{% load tournament_extras %}
 
 {% block content %}
 <div class="container my-4">
-  <h2>{{ tournament.name }}</h2>
+  <div class="d-flex justify-content-between align-items-center">
+    <h2>{{ tournament.name }}</h2>
+    {% if user.is_authenticated and user == tournament.host and tournament.participants.count == tournament.player_limit and not first_round_exists %}
+      <a href="{% url 'tournaments:start_tournament' tournament.id %}" class="btn btn-primary">Start Tournament</a>
+    {% endif %}
+  </div>
   <p>Start Date: {{ tournament.start_date }}</p>
   <p>Player Limit: {{ tournament.player_limit }}</p>
   
@@ -12,16 +18,66 @@
     {% if tournament.participants.count < tournament.player_limit %}
       <a href="{% url 'tournaments:register_for_tournament' tournament.id %}" class="btn btn-success mb-3">Register for Tournament</a>
     {% else %}
-      <p class="alert alert-info">Tournament registration is closed.</p>
+      {% if not first_round_exists %}
+        <p class="alert alert-info">Tournament registration is closed.</p>
+      {% endif %}
     {% endif %}
   {% endif %}
 
+  <!-- Display Tournament Winner if the tournament is over -->
+  {% if tournament.matches.count > 0 %}
+    {% with final_match=tournament.matches.last %}
+      {% if final_match.round == tournament.player_limit|get_final_round and final_match.score1 != 0 and final_match.score2 != 0 %}
+        <div class="text-center mb-4">
+          <h1 class="display-4" style="font-weight: bold; color: #ffcc00;">CHAMPIONS</h1>
+          <div class="winner-card p-3" style="background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+            <!-- Winner's Profile Picture -->
+            <img 
+              src="
+              {% if final_match.score1 > final_match.score2 %}
+                {% if final_match.athlete1.user.profile_image %}
+                  {{ final_match.athlete1.user.profile_image.url }}
+                {% else %}
+                  {% static 'images/default_profile.jpg' %}
+                {% endif %}
+              {% else %}
+                {% if final_match.athlete2.user.profile_image %}
+                  {{ final_match.athlete2.user.profile_image.url }}
+                {% else %}
+                  {% static 'images/default_profile.jpg' %}
+                {% endif %}
+              {% endif %}" 
+              alt="Winner" 
+              class="rounded-circle mb-3" 
+              style="width: 100px; height: 100px; object-fit: cover;"
+            >
+            <!-- Winner's Name -->
+            <h2 style="font-weight: bold; color: #333;">
+              {% if final_match.score1 > final_match.score2 %}
+                {{ final_match.athlete1.user.username }}
+              {% else %}
+                {{ final_match.athlete2.user.username }}
+              {% endif %}
+            </h2>
+            <p class="text-muted">Congratulations!</p>
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+
+  <!-- List of Registered Athletes -->
   <h3>Registered Athletes</h3>
   <div class="row">
     {% for athlete in tournament.participants.all %}
       <div class="col-md-6 mb-3">
         <div class="d-flex align-items-center">
-          <img src="{% if athlete.user.profile_image %}{{ athlete.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" alt="{{ athlete.user.username }}" class="rounded-circle me-2" style="width:50px; height:50px;">
+          <img 
+            src="{% if athlete.user.profile_image %}{{ athlete.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" 
+            alt="{{ athlete.user.username }}" 
+            class="rounded-circle me-2" 
+            style="width:50px; height:50px;"
+          >
           <span>{{ athlete.user.username }}</span>
         </div>
       </div>
@@ -31,23 +87,131 @@
       </div>
     {% endfor %}
   </div>
-  
-  <div class="bracket-container">
-    {% for round_number, matches in rounds.items %}
-      <div class="bracket-round round-{{ round_number }}">
-        <h4>Round {{ round_number }}</h4>
-        {% for match in matches %}
-          <div class="bracket-match">
-            <div class="bracket-player top">
-              {{ match.athlete1.user.username }} ({{ match.score1 }})
-            </div>
-            <div class="bracket-player bottom">
-              {{ match.athlete2.user.username }} ({{ match.score2 }})
-            </div>
+
+  <!-- Bracket Rounds -->
+  {% for round_number, matches in rounds.items %}
+  <div class="mb-4">
+    <h4>{% get_round_label round_number tournament.player_limit %}</h4>
+    <div class="row">
+      {% for match in matches %}
+        <div class="col-md-6 mb-3">
+          <div class="card text-center p-2"><!-- Larger font size with fs-5 -->
+            {% if match.score1 == 0 and match.score2 == 0 %}
+              <!-- Match not finished: show 'vs' layout horizontally -->
+              <div class="d-flex align-items-center justify-content-center">
+                <!-- Athlete1 -->
+                <div class="d-flex align-items-center me-3">
+                  <img 
+                    src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                    alt="{{ match.athlete1.user.username }}"
+                    class="rounded-circle me-2"
+                    style="width:60px; height:60px; object-fit: cover;"
+                  >
+                  <span>{{ match.athlete1.user.username }}</span>
+                </div>
+                <span class="fw-bold mx-3">vs</span>
+                <!-- Athlete2 -->
+                <div class="d-flex align-items-center ms-3">
+                  <img 
+                    src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                    alt="{{ match.athlete2.user.username }}"
+                    class="rounded-circle me-2"
+                    style="width:60px; height:60px; object-fit: cover;"
+                  >
+                  <span>{{ match.athlete2.user.username }}</span>
+                </div>
+              </div>
+
+              <!-- Add a link to record the match result (only visible to the tournament host) -->
+              {% if user == tournament.host %}
+                <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Record Result</a>
+              {% endif %}
+            {% else %}
+              <!-- Match finished: always place the winner on the LEFT -->
+              {% if match.score1 > match.score2 %}
+                <!-- Athlete1 is winner -->
+                <div class="d-flex align-items-center justify-content-center">
+                  <div class="d-flex align-items-center me-3">
+                    <img 
+                      src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete1.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <!-- (W) label + winner’s score in blue -->
+                    <span>
+                      <strong>{{ match.athlete1.user.username }} (W)</strong> - 
+                      <span class="text-primary fw-bold">{{ match.score1 }}</span>
+                    </span>
+                  </div>
+                  <span class="fw-bold mx-3">vs</span>
+                  <div class="d-flex align-items-center ms-3">
+                    <img 
+                      src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete2.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <span>{{ match.athlete2.user.username }} - {{ match.score2 }}</span>
+                  </div>
+                </div>
+              {% elif match.score2 > match.score1 %}
+                <!-- Athlete2 is winner -->
+                <div class="d-flex align-items-center justify-content-center">
+                  <div class="d-flex align-items-center me-3">
+                    <img 
+                      src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete2.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <!-- (W) label + winner’s score in blue -->
+                    <span>
+                      <strong>{{ match.athlete2.user.username }} (W)</strong> - 
+                      <span class="text-primary fw-bold">{{ match.score2 }}</span>
+                    </span>
+                  </div>
+                  <span class="fw-bold mx-3">vs</span>
+                  <div class="d-flex align-items-center ms-3">
+                    <img 
+                      src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete1.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <span>{{ match.athlete1.user.username }} - {{ match.score1 }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <!-- Optional tie case, if it ever occurs in your system -->
+                <div class="d-flex align-items-center justify-content-center">
+                  <div class="d-flex align-items-center me-3">
+                    <img 
+                      src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete1.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <span>{{ match.athlete1.user.username }} - {{ match.score1 }}</span>
+                  </div>
+                  <span class="fw-bold mx-3">vs</span>
+                  <div class="d-flex align-items-center ms-3">
+                    <img 
+                      src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
+                      alt="{{ match.athlete2.user.username }}"
+                      class="rounded-circle me-2"
+                      style="width:60px; height:60px; object-fit: cover;"
+                    >
+                    <span>{{ match.athlete2.user.username }} - {{ match.score2 }}</span>
+                  </div>
+                </div>
+              {% endif %}
+            {% endif %}
           </div>
-        {% endfor %}
-      </div>
-    {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
   </div>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -12,9 +12,11 @@ import random
 
 # View buat ngasih liat list tournament
 def tournament_list(request):
-    tournaments = Tournament.objects.order_by('-created_at')
+    upcoming_tournaments = Tournament.objects.filter(is_finished=False).order_by('start_date')
+    finished_tournaments = Tournament.objects.filter(is_finished=True).order_by('-start_date')
     return render(request, 'tournaments/tournament_list.html', {
-        'tournaments': tournaments
+        'upcoming_tournaments': upcoming_tournaments,
+        'finished_tournaments': finished_tournaments,
     })
 
 # Func buat check IP / admin
@@ -46,7 +48,12 @@ def tournament_detail(request, tournament_id):
     rounds = {}
     for match in tournament.matches.all().order_by('round'):
         rounds.setdefault(match.round, []).append(match)
-    return render(request, 'tournaments/tournament_detail.html', {'tournament': tournament, 'rounds': rounds})
+    first_round_exists = tournament.matches.filter(round=1).exists()
+    return render(request, 'tournaments/tournament_detail.html', {
+        'tournament': tournament,
+        'rounds': rounds,
+        'first_round_exists': first_round_exists
+    })
 
 # View kalo ada atlet yang daftar ke suatu upcoming turney
 @login_required
@@ -57,7 +64,11 @@ def register_for_tournament(request, tournament_id):
         messages.error(request, "Only athlete accounts can register for tournaments.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     
+    # Buat check udh finalized initial rating ato blom
     athlete_profile = request.user.athlete_profile
+    if not athlete_profile.initial_rating_finalized:
+        messages.error(request, "You must finalize your initial rating before registering for this tournament.")
+        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     if tournament.participants.count() >= tournament.player_limit:
         messages.error(request, "Tournament registration is closed because the quota is met.")
@@ -69,11 +80,29 @@ def register_for_tournament(request, tournament_id):
         tournament.participants.add(athlete_profile)
         messages.success(request, "You have successfully registered for the tournament.")
 
-        # Kalo atlet yg register udh full, otomatis bikin pairing ronde pertama
-        if tournament.participants.count() == tournament.player_limit:
-            result_message = create_first_round_matches(tournament)
-            messages.info(request, result_message)
+    return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
+
+@login_required
+@user_passes_test(is_ip_or_admin)
+def start_tournament(request, tournament_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+    # Ensure that only the tournament host (IP) can start it
+    if request.user != tournament.host:
+        messages.error(request, "Only the tournament host can start the tournament.")
+        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+    # Check if the tournament is full
+    if tournament.participants.count() < tournament.player_limit:
+        messages.error(request, "The tournament is not full yet.")
+        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+    # Check if first round matches have already been created
+    if tournament.matches.filter(round=1).exists():
+        messages.error(request, "First round matches have already been generated.")
+        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+    
+    # Generate first round matches
+    result_message = create_first_round_matches(tournament)
+    messages.success(request, result_message)
     return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
 # Func buat automate bikin first round match (pairingnya) --> sementara pairing masih random
@@ -104,56 +133,134 @@ def create_first_round_matches(tournament):
     return "First round matches created successfully."
 
 # View buat nyatet pertandingan & pergantian rating
-def record_match(request, tournament_id):
-    # Buat prototype, sementara detail pertandingan dikirim dari POST form.
+@login_required
+@user_passes_test(is_ip_or_admin)
+def record_match(request, tournament_id, match_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+    match = get_object_or_404(Match, id=match_id, tournament=tournament)
+
+    # Check if the match has already been recorded
+    if match.score1 != 0 or match.score2 != 0:
+        messages.error(request, "This match has already been recorded and cannot be modified.")
+        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+
     if request.method == 'POST':
-        tournament = get_object_or_404(Tournament, id=tournament_id)
-        athlete1_id = request.POST.get('athlete1')
-        athlete2_id = request.POST.get('athlete2')
+        # Handle form submission
         score1 = int(request.POST.get('score1'))
         score2 = int(request.POST.get('score2'))
-        
-        athlete1 = get_object_or_404(AthleteProfile, id=athlete1_id)
-        athlete2 = get_object_or_404(AthleteProfile, id=athlete2_id)
-        
-        # Pembuatan data pertandingan
-        match = Match.objects.create(
-            tournament=tournament,
-            athlete1=athlete1,
-            athlete2=athlete2,
-            score1=score1,
-            score2=score2,
-        )
-        
-        # Proses perubahan ELO rating
-        old_rating1 = athlete1.current_rating
-        old_rating2 = athlete2.current_rating
-        
-        new_rating1, new_rating2 = process_match(athlete1, athlete2, score1, score2)
-        
-        # Update profil Atlet
-        athlete1.current_rating = new_rating1
-        athlete1.save()
-        athlete2.current_rating = new_rating2
-        athlete2.save()
-        
-        # Pembuatan log history rating buat kedua atlet
+
+        # Confirm submission
+        confirm = request.POST.get('confirm')
+        if confirm != 'yes':
+            messages.error(request, "You must confirm the match result before submitting.")
+            return render(request, 'tournaments/record_match.html', {
+                'tournament': tournament,
+                'match': match,
+                'score1': score1,
+                'score2': score2,
+            })
+
+        # Update match scores
+        match.score1 = score1
+        match.score2 = score2
+        match.save()
+
+        # Process ELO rating changes
+        old_rating1 = match.athlete1.current_rating
+        old_rating2 = match.athlete2.current_rating
+        new_rating1, new_rating2 = process_match(match.athlete1, match.athlete2, score1, score2)
+
+        # Update athlete profiles
+        match.athlete1.current_rating = new_rating1
+        match.athlete1.save()
+        match.athlete2.current_rating = new_rating2
+        match.athlete2.save()
+
+        # Create rating history records
         RatingHistory.objects.create(
-            athlete=athlete1,
+            athlete=match.athlete1,
             match=match,
             rating_before=old_rating1,
             rating_after=new_rating1,
             rating_change=new_rating1 - old_rating1
         )
         RatingHistory.objects.create(
-            athlete=athlete2,
+            athlete=match.athlete2,
             match=match,
             rating_before=old_rating2,
             rating_after=new_rating2,
             rating_change=new_rating2 - old_rating2
         )
-        
+
+        # Check if the current round is complete
+        if is_round_complete(tournament, match.round):
+            generate_next_round(tournament, match.round, request)
+
+            # If the tournament is over, mark it as finished
+            if match.round == tournament.player_limit|get_final_round:
+                tournament.is_finished = True
+                tournament.save()
+
+        messages.success(request, "Match result recorded successfully.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+
+    # Render the form for GET requests
+    return render(request, 'tournaments/record_match.html', {
+        'tournament': tournament,
+        'match': match,
+    })
+
+# Func buat cek 1 ronde udh beres ato blom
+def is_round_complete(tournament, round_number):
+    """
+    Check if all matches in the given round are completed.
+    """
+    matches = tournament.matches.filter(round=round_number)
+    return all(match.score1 != 0 and match.score2 != 0 for match in matches)
+
+# Func buat generate ronde selanjutnya kalo 1 ronde udh beres
+def generate_next_round(tournament, current_round, request):
+    """
+    Generate the next round by pairing the winners of the current round.
+    """
+    # Get all matches from the current round
+    current_matches = tournament.matches.filter(round=current_round)
+
+    # Collect the winners of the current round
+    winners = []
+    for match in current_matches:
+        if match.score1 > match.score2:
+            winners.append(match.athlete1)
+        else:
+            winners.append(match.athlete2)
+
+    # If there's only one winner, the tournament is over
+    if len(winners) == 1:
+        messages.info(request, f"The tournament has concluded. The winner is {winners[0].user.username}.")
+        return
+
+    # Pair the winners for the next round
+    next_round = current_round + 1
+    for i in range(0, len(winners), 2):
+        athlete1 = winners[i]
+        athlete2 = winners[i + 1]
+        Match.objects.create(
+            tournament=tournament,
+            athlete1=athlete1,
+            athlete2=athlete2,
+            score1=0,
+            score2=0,
+            round=next_round
+        )
+
+    messages.info(request, f"Round {next_round} has been generated.")
+
+# Func buat nentuin final round
+def get_final_round(player_limit):
+    if player_limit == 8:
+        return 3  # Final round for 8 players
+    elif player_limit == 16:
+        return 4  # Final round for 16 players
     else:
-        # For GET, render a simple form to record a match
-        return render(request, 'tournaments/record_match.html', {'tournament_id': tournament_id})
+        return 0
+    

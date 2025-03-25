@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Avg
-from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm
+from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm, ProfileImageForm
 from tournaments.models import Tournament, Match
 from accounts.models import AthleteProfile, IPRatingOpinion
 
@@ -21,7 +21,7 @@ def is_ip(user):
 # Buat registrasi akun atlet
 def register(request):
     if request.method == 'POST':
-        form = AthleteAccountCreationForm(request.POST)
+        form = AthleteAccountCreationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -87,6 +87,20 @@ def profile(request):
     else:
         # For other roles (e.g. admin) you can render a default profile page.
         return render(request, 'accounts/profile.html')
+
+# Buat edit profile (ngasih akses edit buat akun)
+@login_required
+def update_profile(request):
+    user = request.user
+    if request.method == 'POST':
+        form = ProfileImageForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect('accounts:profile')
+    else:
+        form = ProfileImageForm(instance=user)
+    return render(request, 'accounts/update_profile.html', {'form': form})
 
 # Buat Profile yang bisa diliat publik
 def public_profile(request, athlete_id):

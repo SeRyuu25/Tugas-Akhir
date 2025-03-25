@@ -1,24 +1,26 @@
-.{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-  <h2>Record Match for Tournament {{ tournament_id }}</h2>
+  <h2>Record Match Result</h2>
+  <p>Tournament: {{ tournament.name }}</p>
+  <p>Rounds: {{ match.round }}</p>
+  <p>Match: {{ match.athlete1.user.username }} vs {{ match.athlete2.user.username }}</p>
+
   <form method="post">
     {% csrf_token %}
     <div class="mb-3">
-      <label for="athlete1">Athlete 1 ID:</label>
-      <input type="number" name="athlete1" id="athlete1" class="form-control">
+      <label for="score1">Score for {{ match.athlete1.user.username }}:</label>
+      <input type="number" name="score1" id="score1" class="form-control" required>
     </div>
     <div class="mb-3">
-      <label for="athlete2">Athlete 2 ID:</label>
-      <input type="number" name="athlete2" id="athlete2" class="form-control">
+      <label for="score2">Score for {{ match.athlete2.user.username }}:</label>
+      <input type="number" name="score2" id="score2" class="form-control" required>
     </div>
     <div class="mb-3">
-      <label for="score1">Score 1:</label>
-      <input type="number" name="score1" id="score1" class="form-control">
+      <label>
+        <input type="checkbox" name="confirm" value="yes" required>
+        Saya menyatakan bahwa ini sudah final dan tidak bisa diganti kembali.
+      </label>
     </div>
-    <div class="mb-3">
-      <label for="score2">Score 2:</label>
-      <input type="number" name="score2" id="score2" class="form-control">
-    </div>
-    <button type="submit" class="btn btn-success">Submit Match</button>
+    <button type="submit" class="btn btn-success">Submit Match Result</button>
   </form>
 {% endblock %}
