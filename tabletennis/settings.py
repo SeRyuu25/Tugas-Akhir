@@ -90,6 +90,11 @@ DATABASES = {
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+# Buat auth jadi pake email & password (di accounts/backends.py)
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',  # Your custom backend
+    'django.contrib.auth.backends.ModelBackend',  # Fallback
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

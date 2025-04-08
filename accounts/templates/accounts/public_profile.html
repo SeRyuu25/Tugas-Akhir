@@ -1,6 +1,28 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-  <h2>{{ athlete.user.username }}'s Profile</h2>
-  <p><strong>Current Rating:</strong> {{ athlete.current_rating }}</p>
-  <!-- Add more public information here, e.g., bio, match records, etc. -->
+<div class="container my-4">
+  <div class="card">
+    <div class="card-body text-center text-md-start">
+      {% if athlete.user.profile_image %}
+        <img 
+          src="{{ athlete.user.profile_image.url }}" 
+          alt="Profile Image" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% else %}
+        <img 
+          src="{% static 'images/default_profile.jpg' %}" 
+          alt="Default Profile" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% endif %}
+      <p><strong>Username:</strong> {{ athlete.user.username }}</p>
+      <p><strong>Real Name:</strong> {{ athlete.user.real_name }}</p>
+    </div>
+  </div>
+</div>
 {% endblock %}

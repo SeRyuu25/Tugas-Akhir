@@ -11,7 +11,7 @@
 <body>
     <!-- Navbar -->
     <header>
-      <nav class="navbar navbar-expand-lg custom-navbar rounded" aria-label="navbar sistem informasi">
+      <nav class="navbar navbar-expand-lg custom-navbar rounded fixed-top" aria-label="navbar sistem informasi">
         <div class="container-fluid">
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSistemInformasi" aria-controls="navbarSistemInformasi" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -25,7 +25,7 @@
                 <a class="nav-link" href="{% url 'dashboard:home' %}">Home</a>
               </li>
               <li class="nav-item m-2">
-                <a class="nav-link" href="{% url 'tournaments:tournament_list' %}">Events</a>
+                <a class="nav-link" href="{% url 'tournaments:tournament_list' %}">Tournaments</a>
               </li>
               <li class="nav-item m-2">
                 <a class="nav-link" href="{% url 'dashboard:athlete_ranking' %}">Rankings</a>
@@ -71,7 +71,7 @@
     </header>
 
     <!-- Buat Isi Pagenya -->
-    <main class="container">
+    <main class="container" style="margin-top: 4rem;">
       <!-- buat pop-up message klo ada -->
       {% if messages %}
         {% for message in messages %}

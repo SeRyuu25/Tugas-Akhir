@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="my-4">
   <h2>Record Match Result</h2>
   <p>Tournament: {{ tournament.name }}</p>
   <p>Rounds: {{ match.round }}</p>
@@ -23,4 +24,5 @@
     </div>
     <button type="submit" class="btn btn-success">Submit Match Result</button>
   </form>
+</div>
 {% endblock %}

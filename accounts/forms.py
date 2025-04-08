@@ -4,11 +4,12 @@ from .models import CustomUser, IPRatingOpinion
 
 # Buat registrasi Atlet aja
 class AthleteAccountCreationForm(UserCreationForm):
+    real_name = forms.CharField(required=True, max_length=100)
     profile_image = forms.ImageField(required=False)
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         # Pasang field data yang dibutuhin buat registrasi atlet
-        fields = ('username', 'email', 'profile_image')
+        fields = ('profile_image', 'username', 'real_name', 'email')
     
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -20,9 +21,10 @@ class AthleteAccountCreationForm(UserCreationForm):
 
 # Buat registrasi IP account
 class IPAccountCreationForm(UserCreationForm):
+    real_name = forms.CharField(required=True, max_length=100)
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ('username', 'email',)
+        fields = ('username', 'real_name', 'email',)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -43,7 +45,7 @@ class ManualIPOpinionForm(forms.ModelForm):
         model = IPRatingOpinion
         fields = ['athlete_identifier', 'opinion_rating']
 
-class ProfileImageForm(forms.ModelForm):
+class CustomUserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['profile_image']
+        fields = ['username', 'real_name', 'email', 'profile_image']

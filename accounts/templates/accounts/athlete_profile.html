@@ -10,18 +10,29 @@
 
   <!-- White card for profile image + username -->
   <div class="card mt-3">
-    <div class="card-body">
+    <div class="card-body text-center text-md-start">
       {% if athlete_profile.user.profile_image %}
-        <img src="{{ athlete_profile.user.profile_image.url }}" 
-             alt="Profile Image" 
-             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+        <img 
+          src="{{ athlete_profile.user.profile_image.url }}" 
+          alt="Profile Image" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
       {% else %}
-        <img src="{% static 'images/default_profile.jpg' %}" 
-             alt="Default Profile Image" 
-             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+        <img 
+          src="{% static 'images/default_profile.jpg' %}" 
+          alt="Default Profile" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
       {% endif %}
       <p><strong>Username:</strong> {{ athlete_profile.user.username }}</p>
-      <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
+      <p><strong>Real Name:</strong> {{ request.user.real_name }}</p>
+      {% if athlete_profile.initial_rating_finalized %}
+        <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
+      {% else %}
+        <p><strong>Current Rating:</strong> Menunggu finalisasi rating awal dari Instruktur Pertandingan.</p>
+      {% endif %}
     </div>
   </div>
 
@@ -58,10 +69,6 @@
         <div class="card mb-3">
           <div class="card-body">
             <h5 class="card-title">
-              {% comment %}
-                Determine if the current athlete (athlete_profile) is athlete1 or athlete2,
-                so they always appear on the left side. Then highlight the winner's score.
-              {% endcomment %}
               {% if match.athlete1 == athlete_profile %}
                 {% if match.score1 > match.score2 %}
                   <span>
@@ -101,7 +108,13 @@
                   - {{ match.score1 }} {{ match.athlete1.user.username }}
                 {% endif %}
               {% endif %}
-            </h5>                    
+            </h5>
+            <!-- New: Display the match date -->
+            <p class="card-text">
+              <small class="text-muted">
+                Match Date: {{ match.match_date|date:"M d, Y H:i" }}
+              </small>
+            </p>
             {% for rh in match.ratinghistory_set.all %}
               {% if rh.athlete == athlete_profile %}
                 <p class="card-text">
@@ -122,6 +135,6 @@
     {% empty %}
       <li class="list-group-item">No match records found.</li>
     {% endfor %}
-  </div>
+  </div>  
 </div>
 {% endblock %}

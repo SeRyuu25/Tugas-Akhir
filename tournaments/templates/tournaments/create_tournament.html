@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="my-4">
   <h2>Create New Tournament</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">Create Tournament</button>
   </form>
+</div>
 {% endblock %}

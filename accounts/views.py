@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Avg
-from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm, ProfileImageForm
+from .forms import AthleteAccountCreationForm, IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm, CustomUserUpdateForm
 from tournaments.models import Tournament, Match
 from accounts.models import AthleteProfile, IPRatingOpinion
 
@@ -24,7 +24,7 @@ def register(request):
         form = AthleteAccountCreationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='accounts.backends.EmailBackend')
             # Setelah registrasi, redirect ke home page
             return redirect('dashboard:home')
         else:
@@ -93,13 +93,13 @@ def profile(request):
 def update_profile(request):
     user = request.user
     if request.method == 'POST':
-        form = ProfileImageForm(request.POST, request.FILES, instance=user)
+        form = CustomUserUpdateForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, "Profile updated successfully.")
             return redirect('accounts:profile')
     else:
-        form = ProfileImageForm(instance=user)
+        form = CustomUserUpdateForm(instance=user)
     return render(request, 'accounts/update_profile.html', {'form': form})
 
 # Buat Profile yang bisa diliat publik

@@ -2,10 +2,12 @@
 {% load static %}
 
 {% block content %}
+<div class="my-4">
   <h2>Create IP Account</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">Create IP Account</button>
   </form>
+</div>
 {% endblock %}

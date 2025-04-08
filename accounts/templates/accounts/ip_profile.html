@@ -10,17 +10,24 @@
 
   <!-- White card for profile image + username -->
   <div class="card mt-3">
-    <div class="card-body">
+    <div class="card-body text-center text-md-start">
       {% if request.user.profile_image %}
-        <img src="{{ request.user.profile_image.url }}" 
-             alt="Profile Image" 
-             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+        <img 
+          src="{{ request.user.profile_image.url }}" 
+          alt="Profile Image" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
       {% else %}
-        <img src="{% static 'images/default_profile.jpg' %}" 
-             alt="Default Profile Image" 
-             style="width: 150px; height: 150px; border-radius: 50%; display: block; margin-bottom: 1rem;">
+        <img 
+          src="{% static 'images/default_profile.jpg' %}" 
+          alt="Default Profile" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
       {% endif %}
       <p><strong>Username:</strong> {{ request.user.username }}</p>
+      <p><strong>Real Name:</strong> {{ request.user.real_name }}</p>
     </div>
   </div>
 
@@ -58,6 +65,7 @@
     </ul>
   </div>
 
+  {% comment %}
   <div class="mb-4">
     <h3>Manual Athlete Opinions (Not Linked)</h3>
     <a href="{% url 'accounts:create_manual_rating' %}" class="btn btn-secondary mb-3">Create Manual Rating</a>
@@ -71,5 +79,6 @@
       {% endfor %}
     </ul>
   </div>
+  {% endcomment %}
 </div>
 {% endblock %}

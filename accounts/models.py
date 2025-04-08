@@ -16,6 +16,7 @@ class CustomUser(AbstractUser):
         blank=True, 
         null=True
     )
+    real_name = models.CharField(max_length=100, blank=False, null=False, default="Temp name")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

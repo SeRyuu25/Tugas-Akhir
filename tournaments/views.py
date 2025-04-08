@@ -197,7 +197,7 @@ def record_match(request, tournament_id, match_id):
             generate_next_round(tournament, match.round, request)
 
             # If the tournament is over, mark it as finished
-            if match.round == tournament.player_limit|get_final_round:
+            if match.round == get_final_round(tournament.player_limit):
                 tournament.is_finished = True
                 tournament.save()
 

@@ -1,5 +1,6 @@
 from django import template
 from tournaments.models import round_label
+from ratings.models import RatingHistory
 
 register = template.Library()
 
@@ -18,3 +19,10 @@ def get_final_round(player_limit):
         return 4  # Final round for 16 players
     else:
         return 0  # Fallback (should not happen)
+    
+@register.filter
+def get_rating(match, athlete):
+    try:
+        return match.ratinghistory_set.get(athlete=athlete)
+    except RatingHistory.DoesNotExist:
+        return None

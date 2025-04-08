@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Rate Athlete: {{ athlete.user.username }}</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">Submit Opinion</button>
-</form>
+<div class="my-4">
+  <h2>Rate Athlete: {{ athlete.user.username }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit Opinion</button>
+  </form>
+</div>
 {% endblock %}
