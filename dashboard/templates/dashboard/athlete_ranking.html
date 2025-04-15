@@ -3,12 +3,12 @@
 
 {% block content %}
 <div class="my-4">
-  <h2>Athlete Rankings</h2>
+  <h2>Peringkat Atlet</h2>
   <table class="table table-striped">
     <thead>
       <tr>
-        <th>Rank</th>
-        <th>Athlete</th>
+        <th>Peringkat</th>
+        <th>Atlet</th>
         <th>Rating</th>
       </tr>
     </thead>
@@ -16,12 +16,12 @@
       {% for athlete in athletes %}
         <tr>
           <td>{{ forloop.counter }}</td>
-          <td>{{ athlete.user.username }}</td>
+          <td>{{ athlete.user.nickname }}</td>
           <td>{{ athlete.current_rating }}</td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="3">No athlete data available.</td>
+          <td colspan="3">Belum ada data atlet.</td>
         </tr>
       {% endfor %}
     </tbody>

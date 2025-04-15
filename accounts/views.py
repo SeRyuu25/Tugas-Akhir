@@ -96,7 +96,7 @@ def update_profile(request):
         form = CustomUserUpdateForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
-            messages.success(request, "Profile updated successfully.")
+            messages.success(request, "Profil berhasil diubah.")
             return redirect('accounts:profile')
     else:
         form = CustomUserUpdateForm(instance=user)
@@ -114,7 +114,7 @@ def rate_athlete(request, athlete_id):
     # For a registered athlete (AthleteProfile), allow the IP to submit an opinion.
     athlete = get_object_or_404(AthleteProfile, id=athlete_id)
     if IPRatingOpinion.objects.filter(ip_account=request.user, athlete=athlete).exists():
-        messages.error(request, "You have already submitted a rating for this athlete.")
+        messages.error(request, "Anda sudah memberikan rating untuk atlet ini.")
         return redirect('accounts:profile')
     if request.method == 'POST':
         form = IPRatingOpinionForm(request.POST)
@@ -124,7 +124,7 @@ def rate_athlete(request, athlete_id):
             opinion.athlete = athlete  # link the opinion
             opinion.athlete_identifier = athlete.user.username  # auto-fill identifier
             opinion.save()
-            messages.success(request, "Your rating opinion has been submitted.")
+            messages.success(request, "Rating berhasil disimpan.")
             # Check if we have 3 or more opinions now
             total_opinions = IPRatingOpinion.objects.filter(athlete=athlete).count()
             # Ini kalo buat automatic finalized
@@ -145,7 +145,7 @@ def create_manual_rating(request):
             opinion = form.save(commit=False)
             opinion.ip_account = request.user
             opinion.save()
-            messages.success(request, "Your manual rating has been recorded.")
+            messages.success(request, "Rating Anda telah disimpan.")
             return redirect('accounts:profile')
     else:
         form = ManualIPOpinionForm()
@@ -161,19 +161,19 @@ def finalize_initial_rating(athlete):
     # Get all opinions referencing this athlete
     opinions = athlete.ip_opinions.all()
     if not opinions.exists():
-        return "No IP opinions found for this athlete."
+        return "Belum ada yang memberikan rating untuk atlet ini."
     
     # Calculate average rating from the 'opinion_rating' field
     avg_rating = opinions.aggregate(Avg('opinion_rating'))['opinion_rating__avg']
     if avg_rating is None:
-        return "Could not calculate average rating."
+        return "Tidak bisa menentukan rating rata-rata."
     
     # Update athlete's current_rating and mark as finalized
     athlete.current_rating = round(avg_rating)
     athlete.initial_rating_finalized = True
     athlete.save()
     
-    return f"Initial rating finalized at {athlete.current_rating}."
+    return f"Finalisasi rating awal pada nilai {athlete.current_rating}."
 
 # Buat admin profile -> ngasih list yg blom finalized
 @login_required
@@ -197,7 +197,7 @@ def finalize_rating_admin(request, athlete_id):
         athlete.current_rating = round(avg_rating)
         athlete.initial_rating_finalized = True
         athlete.save()
-        messages.success(request, f"Initial rating finalized for {athlete.user.username} at {athlete.current_rating}.")
+        messages.success(request, f"Rating awal {athlete.user.nickname} berhasil difinalisasi dengan rating {athlete.current_rating}.")
     else:
-        messages.error(request, "No IP opinions available for this athlete.")
+        messages.error(request, "Belum ada yang memberikan rating untuk atlet ini.")
     return redirect('accounts:admin_finalize_ratings')

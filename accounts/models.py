@@ -16,10 +16,11 @@ class CustomUser(AbstractUser):
         blank=True, 
         null=True
     )
-    real_name = models.CharField(max_length=100, blank=False, null=False, default="Temp name")
+    real_name = models.CharField(max_length=100, blank=False, null=False, default="Temp real name")
+    nickname = models.CharField(max_length=100, blank=False, null=False, default="Temp nickname")
 
     def __str__(self):
-        return f"{self.username} ({self.get_role_display()})"
+        return f"{self.nickname} - {self.get_role_display()} ({self.username})"
 
 # Buat database Atlet-related
 class AthleteProfile(models.Model):
@@ -29,7 +30,7 @@ class AthleteProfile(models.Model):
     # Nambahin atribut tentang atlet nanti di sini
 
     def __str__(self):
-        return f"Profile Atlet untuk {self.user.username}"
+        return f"Profile Atlet untuk {self.user.nickname} ({self.user.username})"
 
 class IPRatingOpinion(models.Model):
     ip_account = models.ForeignKey(
@@ -52,7 +53,7 @@ class IPRatingOpinion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.ip_account.username} -> {self.athlete_identifier}: {self.opinion_rating}"
+        return f"{self.ip_account.nickname} ({self.ip_account.username}) -> {self.athlete_identifier}: {self.opinion_rating}"
     
     class Meta:
         # When an opinion is linked to a registered athlete, the combination of ip_account and athlete must be unique.

@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="my-4">
-  <h2>Rate Athlete: {{ athlete.user.username }}</h2>
+  <h2>Berikan Rating Awal : {{ athlete.user.nickname }}</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Submit Opinion</button>
+    <!-- Initial Rating -->
+    <div class="mb-3">
+      <label for="{{ form.opinion_rating.id_for_label }}" class="form-label">Rating</label>
+      {{ form.opinion_rating }}
+      {% if form.opinion_rating.errors %}
+        <div class="text-danger">{{ form.opinion_rating.errors }}</div>
+      {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan</button>
   </form>
 </div>
 {% endblock %}

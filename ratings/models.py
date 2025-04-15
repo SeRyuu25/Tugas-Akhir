@@ -14,4 +14,4 @@ class RatingHistory(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.athlete.user.username}: {self.rating_before} -> {self.rating_after}"
+        return f"{self.athlete.user.nickname} ({self.athlete.user.username}) : {self.rating_before} -> {self.rating_after}"

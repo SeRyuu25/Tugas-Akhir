@@ -7,14 +7,23 @@ from .models import CustomUser, AthleteProfile
 # Buat bikin custom admin view di admin:index (alias dashboard admin)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser')
+    list_display = ('username', 'email', 'nickname', 'real_name', 'role', 'is_staff', 'is_superuser')
     
     # Extend the default fieldsets to include the role
-    fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('role',)}),
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('profile_image', 'email', 'nickname', 'real_name')}),
+        ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     
     # Also include role when creating a new user in the admin
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('role',)}),
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'nickname', 'real_name', 'email', 'role', 'password1', 'password2'),
+        }),
     )
+
+admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(AthleteProfile)

@@ -4,11 +4,14 @@
 {% block content %}
 <div class="container my-4">
   <div class="d-flex justify-content-between align-items-center">
-    <h2>Your Athlete Profile</h2>
-    <a href="{% url 'accounts:update_profile' %}" class="btn btn-secondary">Edit Profile</a>
+    <h2>Profil Anda</h2>
+    <div>
+      <a href="{% url 'accounts:update_profile' %}" class="btn btn-secondary me-2">Edit Profil</a>
+      <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-primary">Ubah Kata Sandi</a>
+    </div>
   </div>
 
-  <!-- White card for profile image + username -->
+  <!-- Box putih buat data profil -->
   <div class="card mt-3">
     <div class="card-body text-center text-md-start">
       {% if athlete_profile.user.profile_image %}
@@ -26,44 +29,44 @@
           style="width:150px; height:150px; object-fit:cover;"
         >
       {% endif %}
-      <p><strong>Username:</strong> {{ athlete_profile.user.username }}</p>
-      <p><strong>Real Name:</strong> {{ request.user.real_name }}</p>
+      <p><strong>Nama Panggilan :</strong> {{ athlete_profile.user.nickname }}</p>
+      <p><strong>Nama Lengkap   :</strong> {{ request.user.real_name }}</p>
       {% if athlete_profile.initial_rating_finalized %}
-        <p><strong>Current Rating:</strong> {{ athlete_profile.current_rating }}</p>
+        <p><strong>Rating Sekarang:</strong> {{ athlete_profile.current_rating }}</p>
       {% else %}
-        <p><strong>Current Rating:</strong> Menunggu finalisasi rating awal dari Instruktur Pertandingan.</p>
+        <p><strong>Rating Sekarang:</strong> Menunggu finalisasi rating awal dari Instruktur Pertandingan.</p>
       {% endif %}
     </div>
   </div>
 
   <div class="mb-4 mt-4">
-    <h3>Upcoming Tournaments</h3>
+    <h3>Turnamen Mendatang</h3>
     <ul class="list-group">
       {% for tournament in upcoming_tournaments %}
         <li class="list-group-item">
           {{ tournament.name }} - {{ tournament.start_date }}
         </li>
       {% empty %}
-        <li class="list-group-item">No upcoming tournaments.</li>
+        <li class="list-group-item">Belum mendaftar ke turnamen mendatang.</li>
       {% endfor %}
     </ul>
   </div>
 
   <div class="mb-4">
-    <h3>Finished Tournaments</h3>
+    <h3>Turnamen Terakhir</h3>
     <ul class="list-group">
       {% for tournament in finished_tournaments %}
         <li class="list-group-item">
           {{ tournament.name }} - {{ tournament.start_date }}
         </li>
       {% empty %}
-        <li class="list-group-item">No finished tournaments.</li>
+        <li class="list-group-item">Belum ada turnamen yang selesai.</li>
       {% endfor %}
     </ul>
   </div>
 
   <div class="mb-4">
-    <h3>Your Match Records</h3>
+    <h3>Hasil Pertandingan Anda</h3>
     {% for match in matches %}
       {% if match.score1 != 0 or match.score2 != 0 %}
         <div class="card mb-3">
@@ -72,53 +75,53 @@
               {% if match.athlete1 == athlete_profile %}
                 {% if match.score1 > match.score2 %}
                   <span>
-                    {{ match.athlete1.user.username }}
+                    {{ match.athlete1.user.nickname }}
                     <span class="text-primary fw-bold"> {{ match.score1 }}</span>
                   </span>
-                  - {{ match.score2 }} {{ match.athlete2.user.username }}
+                  - {{ match.score2 }} {{ match.athlete2.user.nickname }}
                 {% elif match.score2 > match.score1 %}
                   <span>
-                    {{ match.athlete1.user.username }} {{ match.score1 }}
+                    {{ match.athlete1.user.nickname }} {{ match.score1 }}
                   </span>
                   - <span>
                       <span class="text-primary fw-bold">{{ match.score2 }}</span>
-                      {{ match.athlete2.user.username }}
+                      {{ match.athlete2.user.nickname }}
                     </span>
                 {% else %}
-                  {{ match.athlete1.user.username }} {{ match.score1 }}
-                  - {{ match.score2 }} {{ match.athlete2.user.username }}
+                  {{ match.athlete1.user.nickname }} {{ match.score1 }}
+                  - {{ match.score2 }} {{ match.athlete2.user.nickname }}
                 {% endif %}
               {% else %}
                 {% if match.score2 > match.score1 %}
                   <span>
-                    {{ match.athlete2.user.username }}
+                    {{ match.athlete2.user.nickname }}
                     <span class="text-primary fw-bold"> {{ match.score2 }}</span>
                   </span>
-                  - {{ match.score1 }} {{ match.athlete1.user.username }}
+                  - {{ match.score1 }} {{ match.athlete1.user.nickname }}
                 {% elif match.score1 > match.score2 %}
                   <span>
-                    {{ match.athlete2.user.username }} {{ match.score2 }}
+                    {{ match.athlete2.user.nickname }} {{ match.score2 }}
                   </span>
                   - <span>
                       <span class="text-primary fw-bold">{{ match.score1 }}</span>
-                      {{ match.athlete1.user.username }}
+                      {{ match.athlete1.user.nickname }}
                     </span>
                 {% else %}
-                  {{ match.athlete2.user.username }} {{ match.score2 }}
-                  - {{ match.score1 }} {{ match.athlete1.user.username }}
+                  {{ match.athlete2.user.nickname }} {{ match.score2 }}
+                  - {{ match.score1 }} {{ match.athlete1.user.nickname }}
                 {% endif %}
               {% endif %}
             </h5>
             <!-- New: Display the match date -->
             <p class="card-text">
               <small class="text-muted">
-                Match Date: {{ match.match_date|date:"M d, Y H:i" }}
+                Tanggal Pertandingan: {{ match.match_date|date:"M d, Y H:i" }}
               </small>
             </p>
             {% for rh in match.ratinghistory_set.all %}
               {% if rh.athlete == athlete_profile %}
                 <p class="card-text">
-                  Rating change: {{ rh.rating_before }} → {{ rh.rating_after }}
+                  Perubahan rating: {{ rh.rating_before }} → {{ rh.rating_after }}
                   {% if rh.rating_change > 0 %}
                     <span class="text-success">(+{{ rh.rating_change }})</span>
                   {% elif rh.rating_change < 0 %}
@@ -133,7 +136,7 @@
         </div>
       {% endif %}
     {% empty %}
-      <li class="list-group-item">No match records found.</li>
+      <li class="list-group-item">Belum ada hasil pertandingan.</li>
     {% endfor %}
   </div>  
 </div>

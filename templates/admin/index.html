@@ -3,20 +3,20 @@
 
 {% block content %}
   {{ block.super }}
-  <h2>Upcoming Tournaments</h2>
+  <h2>Turnamen Mendatang</h2>
   <ul>
     {% for tournament in tournaments %}
       <li>{{ tournament.name }} - {{ tournament.start_date }}</li>
     {% empty %}
-      <li>No tournaments available.</li>
+      <li>Belum ada data turnamen.</li>
     {% endfor %}
   </ul>
-  <h2>Recent IP Rating Opinions</h2>
+  <h2>Penilaian IP terbaru</h2>
   <ul>
     {% for opinion in recent_ip_opinions %}
-      <li>{{ opinion.ip_account.username }} rated {{ opinion.athlete_identifier }}: {{ opinion.opinion_rating }}</li>
+      <li>{{ opinion.ip_account.nickname }} memberikan penilaian kepada {{ opinion.athlete_identifier }}: {{ opinion.opinion_rating }}</li>
     {% empty %}
-      <li>No opinions recorded.</li>
+      <li>Belum ada data penilaian yang diberikan.</li>
     {% endfor %}
   </ul>
 {% endblock %}

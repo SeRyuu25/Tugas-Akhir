@@ -33,10 +33,10 @@ def create_tournament(request):
             tournament = form.save(commit=False)
             tournament.host = request.user
             tournament.save()
-            messages.success(request, "Tournament created successfully.")
+            messages.success(request, "Turnamen berhasil dibuat.")
             return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
         else:
-            messages.error(request, "There was an error creating the tournament.")
+            messages.error(request, "Terdapat error saat membuat turnamen.")
     else:
         form = TournamentForm()
     return render(request, 'tournaments/create_tournament.html', {'form': form})
@@ -61,24 +61,24 @@ def register_for_tournament(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     # check role, takutnya ada yg bukan atlet tapi nyoba register
     if request.user.role != 'atlet':
-        messages.error(request, "Only athlete accounts can register for tournaments.")
+        messages.error(request, "Hanya akun atlet yang dapat mendaftar pada turnamen.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     
     # Buat check udh finalized initial rating ato blom
     athlete_profile = request.user.athlete_profile
     if not athlete_profile.initial_rating_finalized:
-        messages.error(request, "You must finalize your initial rating before registering for this tournament.")
+        messages.error(request, "Anda belum bisa mendaftar pada turnamen ini. Rating awal Anda belum difinalisasi oleh admin.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     if tournament.participants.count() >= tournament.player_limit:
-        messages.error(request, "Tournament registration is closed because the quota is met.")
+        messages.error(request, "Pendaftaran turnamen ini sudah ditutup. (Kuota atlet terpenuhi)")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     if athlete_profile in tournament.participants.all():
-        messages.info(request, "You are already registered for this tournament.")
+        messages.info(request, "Anda sudah terdaftar pada turnamen ini.")
     else:
         tournament.participants.add(athlete_profile)
-        messages.success(request, "You have successfully registered for the tournament.")
+        messages.success(request, "Anda berhasil mendaftar pada turnamen ini.")
 
     return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
@@ -89,15 +89,15 @@ def start_tournament(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     # Ensure that only the tournament host (IP) can start it
     if request.user != tournament.host:
-        messages.error(request, "Only the tournament host can start the tournament.")
+        messages.error(request, "Hanya pembuat turnamen ini yang dapat memulai turnamen.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     # Check if the tournament is full
     if tournament.participants.count() < tournament.player_limit:
-        messages.error(request, "The tournament is not full yet.")
+        messages.error(request, "Kuota atlet belum terpenuhi.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     # Check if first round matches have already been created
     if tournament.matches.filter(round=1).exists():
-        messages.error(request, "First round matches have already been generated.")
+        messages.error(request, "Pertandingan babak pertama sudah ada.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     
     # Generate first round matches
@@ -109,11 +109,11 @@ def start_tournament(request, tournament_id):
 def create_first_round_matches(tournament):
     # Check if there are enough participants
     if tournament.participants.count() < tournament.player_limit:
-        return "Not enough participants registered to create first round matches."
+        return "Atlet yang mendaftar masih belum cukup untuk membuat pertandingan babak pertama."
     
     # Check if round 1 matches already exist
     if tournament.matches.filter(round=1).exists():
-        return "First round matches have already been created."
+        return "Pertandingan babak pertama sudah ada."
     
     participants = list(tournament.participants.all())
     random.shuffle(participants)
@@ -130,7 +130,7 @@ def create_first_round_matches(tournament):
             score2=0,
             round=1
         )
-    return "First round matches created successfully."
+    return "Pertandingan babak pertama berhasil dibuat."
 
 # View buat nyatet pertandingan & pergantian rating
 @login_required
@@ -141,7 +141,7 @@ def record_match(request, tournament_id, match_id):
 
     # Check if the match has already been recorded
     if match.score1 != 0 or match.score2 != 0:
-        messages.error(request, "This match has already been recorded and cannot be modified.")
+        messages.error(request, "Hasil pertandingan ini sudah disimpan dan tidak dapat diubah.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     if request.method == 'POST':
@@ -152,7 +152,7 @@ def record_match(request, tournament_id, match_id):
         # Confirm submission
         confirm = request.POST.get('confirm')
         if confirm != 'yes':
-            messages.error(request, "You must confirm the match result before submitting.")
+            messages.error(request, "Anda harus mengkonfirmasi hasil pertandingan sebelum disimpan.")
             return render(request, 'tournaments/record_match.html', {
                 'tournament': tournament,
                 'match': match,
@@ -201,7 +201,7 @@ def record_match(request, tournament_id, match_id):
                 tournament.is_finished = True
                 tournament.save()
 
-        messages.success(request, "Match result recorded successfully.")
+        messages.success(request, "Hasil pertandingan berhasil disimpan.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     # Render the form for GET requests
@@ -236,7 +236,7 @@ def generate_next_round(tournament, current_round, request):
 
     # If there's only one winner, the tournament is over
     if len(winners) == 1:
-        messages.info(request, f"The tournament has concluded. The winner is {winners[0].user.username}.")
+        messages.info(request, f"Turnamen telah selesai. Pemenangnya adalah {winners[0].user.nickname}!")
         return
 
     # Pair the winners for the next round
@@ -253,7 +253,7 @@ def generate_next_round(tournament, current_round, request):
             round=next_round
         )
 
-    messages.info(request, f"Round {next_round} has been generated.")
+    messages.info(request, f"Pertandingan ronde {next_round} sudah dibuat.")
 
 # Func buat nentuin final round
 def get_final_round(player_limit):

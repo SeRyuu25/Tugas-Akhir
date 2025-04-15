@@ -3,37 +3,39 @@
 
 {% block content %}
 <div class="my-4">
-  <h2>Finalize Athlete Initial Ratings</h2>
+  <h2>Finalisasi Rating Awal Atlet</h2>
   <table class="table table-bordered">
     <thead>
       <tr>
-        <th>Athlete</th>
-        <th>IP Opinions</th>
-        <th>Action</th>
+        <th>Atlet</th>
+        <th>Rating dari IP</th>
+        <th>Aksi</th>
       </tr>
     </thead>
     <tbody>
       {% for athlete in athletes %}
         <tr>
-          <td>{{ athlete.user.username }}</td>
+          <td>{{ athlete.user.nickname }}</td>
           <td>
             {% with opinions=athlete.ip_opinions.all %}
               {% if opinions %}
-                {% for opinion in opinions %}
-                  {{ opinion.ip_account.username }} – {{ opinion.opinion_rating }}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
+                  <ul>
+                      {% for opinion in opinions %}
+                          <li>{{ opinion.ip_account.nickname }} - {{ opinion.opinion_rating }}</li>
+                      {% endfor %}
+                  </ul>
               {% else %}
-                No opinions yet.
+                  <p>Belum ada yang memberikan rating.</p>
               {% endif %}
             {% endwith %}
           </td>
           <td>
-            <a href="{% url 'accounts:finalize_rating_admin' athlete.id %}" class="btn btn-warning btn-sm">Finalize</a>
+            <a href="{% url 'accounts:finalize_rating_admin' athlete.id %}" class="btn btn-warning btn-sm">Finalisasi</a>
           </td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="3">No athletes pending finalization.</td>
+          <td colspan="3">Belum ada atlet yang harus difinalisasi.</td>
         </tr>
       {% endfor %}
     </tbody>

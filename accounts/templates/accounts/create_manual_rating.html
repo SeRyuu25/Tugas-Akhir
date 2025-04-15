@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="my-4">
-  <h2>Create Manual Rating for Unregistered Athlete</h2>
+  <h2>Pemberian Rating pada Atlet yang Belum Terdaftar</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Simpan</button>
   </form>
 </div>
 {% endblock %}
