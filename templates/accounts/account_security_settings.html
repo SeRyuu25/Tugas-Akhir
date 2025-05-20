@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <a href="{% url 'profile' %}" class="btn btn-outline-primary mb-3">&larr; Kembali</a>
+  <h2>Pengaturan Keamanan Akun</h2>
+  
+  <!-- Section for Changing Email -->
+  <div class="mb-4">
+    <h3>Ubah Alamat Email</h3>
+    <p>Email Saat Ini: {{ user.email|mask_email }}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" name="change_email" class="btn btn-primary">Kirim OTP ke Email Saat Ini</button>
+    </form>
+  </div>
+
+  <!-- Section for Changing Password -->
+  <div class="mb-4">
+    <h3>Ubah Kata Sandi</h3>
+    <p>Untuk mengubah kata sandi Anda, klik tombol di bawah ini.</p>
+    <a href="{% url 'password_change' %}" class="btn btn-primary">Ubah Kata Sandi</a>
+  </div>
+</div>
+{% endblock %}

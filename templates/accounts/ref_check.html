@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="my-4">
+  <h2>Cek Referensi Atlet</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="mb-3">
+      <label for="{{ form.nickname.id_for_label }}" class="form-label">
+        Nama Panggilan
+      </label>
+      {{ form.nickname }}
+      {% if form.nickname.errors %}
+        <div class="text-danger">{{ form.nickname.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.ptm.id_for_label }}" class="form-label">
+        Nama PTM
+      </label>
+      {{ form.ptm }}
+      {% if form.ptm.errors %}
+        <div class="text-danger">{{ form.ptm.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Lanjut</button>
+  </form>
+</div>
+{% endblock %}

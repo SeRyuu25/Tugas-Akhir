@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+
+  <!-- Public Profile Card (unchanged) -->
+  <div class="card mb-4">
+    <div class="card-body text-center text-md-start">
+      {% if athlete.user.profile_image %}
+        <img
+          src="{{ athlete.user.profile_image.url }}"
+          alt="Profile Image"
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% else %}
+        <img
+          src="{% static 'images/default_profile.jpg' %}"
+          alt="Default Profile"
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% endif %}
+
+      <p><strong>Nama Panggilan    :</strong> {{ athlete.user.nickname }}</p>
+      <p><strong>Nama Lengkap      :</strong> {{ athlete.user.real_name }}</p>
+      <p><strong>Nama PTM          :</strong> {{ athlete.user.ptm }}</p>
+      {% if not athlete.initial_rating_finalized %}
+        <p><strong>Divisi Sebelumnya :</strong> {{ athlete.previous_divisi }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Informational reference for IPs -->
+  <div class="alert alert-info mb-4">
+    Berikut merupakan referensi yang dapat digunakan untuk memberikan rating awal kepada atlet berdasarkan divisi sebelumnya:
+    <ol class="mb-0">
+      <li>Divisi 8 → 1000</li>
+      <li>Divisi 9 → 900</li>
+      <li>Divisi 10 → 800</li>
+      <li>Kategori C1 &amp; C2 → 750</li>
+      <li>Kategori D1 &amp; D2 → 700</li>
+    </ol>
+  </div>
+
+  <!-- Rating Form -->
+  <div class="card">
+    <div class="card-body">
+      <h2 class="mb-4">Berikan Rating Awal untuk {{ athlete.user.nickname }}</h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Initial Rating Field -->
+        <div class="mb-3">
+          <label for="{{ form.opinion_rating.id_for_label }}" class="form-label">
+            Rating
+          </label>
+          {{ form.opinion_rating }}
+          {% if form.opinion_rating.errors %}
+            <div class="text-danger">{{ form.opinion_rating.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Confirmation Checkbox -->
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            name="confirm_rating"
+            id="confirm_rating"
+            class="form-check-input"
+            required
+          >
+          <label for="confirm_rating" class="form-check-label">
+            Saya menyatakan bahwa ini sudah final dan tidak bisa diganti kembali.
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

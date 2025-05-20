@@ -22,7 +22,8 @@ from custom_admin import my_admin_site
 
 urlpatterns = [
     path('admin/', my_admin_site.urls),
-    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('accounts/', include('accounts.urls')),
+    path('accounts/', include('allauth.urls')),
     path('', include(('dashboard.urls', 'dashboard'), namespace='dashboard')),
     path('tournaments/', include('tournaments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # Buat development doang

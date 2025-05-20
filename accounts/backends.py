@@ -3,6 +3,13 @@ from django.contrib.auth import get_user_model
 
 UserModel = get_user_model()
 
+"""
+Harusnya ini udh ga dipake, diganti total jadi pake yg punya allauth
+(kalo mau cek, cek di tabletennis/settings.py di AUTHENTICATION_BACKENDS
+msh ada path ke file ini ato engga)
+'accounts.backends.EmailBackend' <-- yg ini
+"""
+
 class EmailBackend(ModelBackend):
     """
     Authenticate using email and password.

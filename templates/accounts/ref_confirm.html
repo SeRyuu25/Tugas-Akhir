@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="my-4">
+  <h2>Konfirmasi Data Atlet</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label"><strong>Nama Panggilan</strong></label>
+      <div>{{ reference.nickname }}</div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label"><strong>Nama PTM</strong></label>
+      <div>{{ reference.ptm }}</div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label"><strong>Divisi Sebelumnya</strong></label>
+      <div>{{ reference.divisi }}</div>
+    </div>
+
+    <button name="back" type="submit" class="btn btn-secondary me-2">
+      Kembali
+    </button>
+    <button type="submit" class="btn btn-primary">
+      Lanjut
+    </button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2>Ubah Profil</h2>
+  
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Profile Image Display with Preview -->
+    <div class="profile-img-container mb-4">
+      <!-- Display Profile Image -->
+      <div class="profile-img-wrapper" style="display: flex; justify-content: center;">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-img-preview" id="profile-img-preview">
+        {% else %}
+          <div class="profile-img-preview" id="profile-img-preview">No Image</div>
+        {% endif %}
+      </div>
+
+      <!-- Upload New Image Button -->
+      <div class="mb-3">
+        <!-- Hidden input for file selection -->
+        <input type="file" name="profile_image" class="form-control d-none" id="profile_image" onchange="previewImage(event)">
+        
+        <!-- Custom button that triggers file input -->
+        <label for="profile_image" class="btn btn-outline-primary rounded mt-3 w-100" style="text-align: center;">Ubah Foto Profil</label>
+      </div>
+      
+      {% if form.profile_image.errors %}
+        <div class="text-danger">{{ form.profile_image.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Nickname -->
+    <div class="mb-3">
+      <label for="{{ form.nickname.id_for_label }}" class="form-label">Nama Panggilan</label>
+      {{ form.nickname }}
+      {% if form.nickname.errors %}
+        <div class="text-danger">{{ form.nickname.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Real Name Field -->
+    <div class="mb-3">
+      <label for="{{ form.real_name.id_for_label }}" class="form-label">Nama Lengkap</label>
+      {{ form.real_name }}
+      {% if form.real_name.errors %}
+        <div class="text-danger">{{ form.real_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+  </form>
+</div>
+
+<!-- Preview Image Javascript -->
+<script>
+  function previewImage(event) {
+    const preview = document.getElementById('profile-img-preview');
+    const file = event.target.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block'; // Make sure the image is visible
+      }
+      reader.readAsDataURL(file);
+    } else {
+      preview.style.display = 'none'; // Hide preview if no file is selected
+    }
+  }
+</script>
+
+{% endblock %}

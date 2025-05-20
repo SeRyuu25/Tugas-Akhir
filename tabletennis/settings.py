@@ -20,12 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-adj_k=4ngaa_wetei3d(94@&=z4mz9(!e618z)q3^rvw@-p8m7'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,21 +37,28 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',        # required by allauth
+    'allauth',
+    'allauth.account',
+    "import_export",
 
     "accounts",
     "dashboard",
     "ratings",
     "tournaments",
 ]
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'tabletennis.middleware.ForceIndonesianMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -80,11 +87,14 @@ WSGI_APPLICATION = 'tabletennis.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+import os
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
@@ -94,7 +104,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Buat auth jadi pake email & password (di accounts/backends.py)
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailBackend',  # Your custom backend
+    'allauth.account.auth_backends.AuthenticationBackend', # Backend Allauth (buat token-based login, email confirmation)
     'django.contrib.auth.backends.ModelBackend',  # Fallback
 ]
 
@@ -131,7 +141,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+# Optional: enable GZip & caching
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Explicitly tell Django where to look for static files
 STATICFILES_DIRS = [
@@ -139,9 +152,34 @@ STATICFILES_DIRS = [
 ]
 
 
-# Redirect login to homepage, instead of account/profile
+# Email Settings
+from decouple import config
 
-LOGIN_REDIRECT_URL = 'dashboard:home'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'in-v3.mailjet.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('MAILJET_API_PUBLIC')
+EMAIL_HOST_PASSWORD = config('MAILJET_API_SECRET')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+
+
+# Account signup and login
+
+ACCOUNT_LOGIN_METHODS = ['email']
+ACCOUNT_EMAIL_VERIFICATION  = 'mandatory'   # ‘mandatory’ block login sampe udh konfirmasi
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_ADAPTER = 'accounts.adapter.MyAccountAdapter'
+ACCOUNT_FORMS = {
+    'signup': 'accounts.forms.CustomSignupForm',
+}
+
+
+# redirect URLs
+
+LOGIN_REDIRECT_URL = 'dashboard:home' # Redirect login ke homepage, basenya harusnya ke account/profile
+LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 
 # Default primary key field type
@@ -150,9 +188,16 @@ LOGIN_REDIRECT_URL = 'dashboard:home'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# After Logout Redirect
+# Messages
+from django.contrib.messages import constants as message_constants
 
-LOGOUT_REDIRECT_URL = '/'
+MESSAGE_TAGS = {
+    message_constants.DEBUG:   "secondary",
+    message_constants.INFO:    "info",
+    message_constants.SUCCESS: "success",
+    message_constants.WARNING: "warning",
+    message_constants.ERROR:   "danger",
+}
 
 
 # For media (profile picture dll)

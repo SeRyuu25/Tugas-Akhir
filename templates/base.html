@@ -43,13 +43,13 @@
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                     <li><span class="dropdown-item-text">Halo, {{ user.nickname }}!</span></li>
-                    <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Profil</a></li>
+                    <li><a class="dropdown-item" href="{% url 'profile' %}">Profil</a></li>
                     {% if user.is_superuser or user.role == 'admin' %}
                       <li><a class="dropdown-item" href="{% url 'admin:index' %}">Dashboard Admin</a></li>
-                      <li><a class="dropdown-item" href="{% url 'accounts:create_ip_account' %}">Buat Akun IP Baru</a></li>
+                      <li><a class="dropdown-item" href="{% url 'create_ip_account' %}">Buat Akun IP Baru</a></li>
                     {% endif %}
                     <li>
-                      <form action="{% url 'accounts:logout' %}" method="post" class="m-0 p-0">
+                      <form action="{% url 'account_logout' %}" method="post" class="m-0 p-0">
                         {% csrf_token %}
                         <button type="submit" class="dropdown-item btn btn-link d-block text-start m-0 p-0">Keluar</button>
                       </form>
@@ -58,10 +58,10 @@
                 </li>
               {% else %}
                 <li class="nav-item m-2">
-                  <a class="btn custom-btn" href="{% url 'accounts:login' %}">Masuk</a>
+                  <a class="btn custom-btn" href="{% url 'account_login' %}">Masuk</a>
                 </li>
                 <li class="nav-item m-2">
-                  <a class="btn custom-btn" href="{% url 'accounts:register' %}">Daftar</a>
+                  <a class="btn custom-btn" href="{% url 'account_ref_check' %}">Daftar</a>
                 </li>              
               {% endif %}
             </ul>

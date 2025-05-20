@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2>Ubah Alamat Email</h2>
+  <form method="post">
+    {% csrf_token %}
+    
+    <!-- Display Current Email with Censorship -->
+    <div class="mb-3">
+      <label class="form-label">Email Saat Ini</label>
+      <input type="text" class="form-control" value="{{ user.email|slice:":2" }}****{{ user.email|slice:"-5" }}" readonly>
+    </div>
+
+    <!-- Send OTP Button -->
+    <button type="submit" class="btn btn-primary">Kirim OTP ke Email Saat Ini</button>
+  </form>
+</div>
+{% endblock %}

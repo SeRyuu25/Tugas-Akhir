@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container my-4">
+  <h2 class="mb-4">Konfirmasi Alamat E-mail</h2>
+
+  {% if confirmation %}
+    <p>
+      Silakan konfirmasi bahwa  
+      <strong>
+        {{ confirmation.email_address.email }}
+      </strong>  
+      adalah alamat e-mail untuk akun  
+      <strong>{{ confirmation.email_address.user.nickname }}</strong>.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ redirect_field }}
+      <button type="submit" class="btn btn-primary">
+        Konfirmasi
+      </button>
+    </form>
+
+  {% else %}
+    <div class="alert alert-warning">
+      Tautan konfirmasi ini sudah kedaluwarsa atau tidak valid.
+    </div>
+    <a href="{% url 'account_email' %}" class="btn btn-secondary">
+      Kirim ulang tautan verifikasi
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

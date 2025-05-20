@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2>Masukkan Email Baru</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- New Email Input -->
+    <div class="mb-3">
+      <label for="new_email" class="form-label">Email Baru</label>
+      <input type="email" name="new_email" class="form-control" required>
+    </div>
+
+    <!-- Send Verification Email Button -->
+    <button type="submit" class="btn btn-primary">Kirim Email Verifikasi</button>
+  </form>
+</div>
+{% endblock %}

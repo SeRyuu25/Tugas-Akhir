@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="my-4">
+  <h2>Verifikasi Email</h2>
+  <p>
+    Terima kasih telah mendaftar! Sebelum melanjutkan, silakan periksa email Anda
+    dan klik tautan verifikasi untuk mengaktifkan akun. Jika Anda tidak menerima email 
+    dalam beberapa menit, mohon periksa folder spam Anda.
+  </p>
+  {% comment %}
+  <p>
+    Jika Anda tidak menerima email dalam beberapa menit, periksa folder spam Anda
+    atau <a href="{% url 'account_email' %}">kirim ulang email verifikasi</a>.
+  </p>
+  {% endcomment %}
+  <a href="{% url 'account_login' %}" class="btn btn-outline-secondary mt-3">
+    Kembali ke Halaman Masuk
+  </a>
+</div>
+{% endblock %}

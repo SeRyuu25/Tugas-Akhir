@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h2>Profil Anda</h2>
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 mt-2 mt-md-0 flex-shrink-0">
+      <a href="{% url 'edit_profile' %}" class="btn btn-secondary text-nowrap w-100 w-md-auto">Edit Profil</a>
+      <a href="{% url 'account_security_settings' %}" class="btn btn-outline-primary text-nowrap w-100 w-md-auto">Pengaturan Keamanan Akun</a>
+    </div>
+  </div>
+
+  <!-- Box putih buat data profil -->
+  <div class="card mt-3">
+    <div class="card-body text-center text-md-start">
+      {% if request.user.profile_image %}
+        <img 
+          src="{{ request.user.profile_image.url }}" 
+          alt="Profile Image" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% else %}
+        <img 
+          src="{% static 'images/default_profile.jpg' %}" 
+          alt="Default Profile" 
+          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
+          style="width:150px; height:150px; object-fit:cover;"
+        >
+      {% endif %}
+      <p><strong>Nama Panggilan :</strong> {{ request.user.nickname }}</p>
+      <p><strong>Nama Lengkap   :</strong> {{ request.user.real_name }}</p>
+      <p><strong>Nama PTM       :</strong> {{ request.user.ptm }}</p>
+      {% if athlete_profile.initial_rating_finalized %}
+        <p><strong>Rating Sekarang:</strong> {{ athlete_profile.current_rating }}</p>
+      {% else %}
+        <p><strong>Rating Sekarang:</strong> Menunggu finalisasi rating awal dari Instruktur Pertandingan.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mb-4 mt-4">
+    <h3>Turnamen Mendatang</h3>
+    <ul class="list-group">
+      {% for tournament in upcoming_tournaments %}
+        <li class="list-group-item">
+          {{ tournament.name }} - {{ tournament.start_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">Belum mendaftar ke turnamen mendatang.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="mb-4">
+    <h3>Turnamen Terakhir</h3>
+    <ul class="list-group">
+      {% for tournament in finished_tournaments %}
+        <li class="list-group-item">
+          {{ tournament.name }} - {{ tournament.start_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">Belum ada turnamen yang selesai.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Hasil Pertandingan Anda -->
+  <div class="mb-4">
+    <h3>Hasil Pertandingan Anda</h3>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="text-center align-middle" style="background-color: #FDCBD0;">
+          <tr>
+            <th class="align-middle">Tanggal</th>
+            <th class="text-center align-middle">Menang / Kalah</th>
+            <th class="text-center align-middle">VS</th>
+            <th class="text-center align-middle">Skor</th>
+            <th class="text-center align-middle">Perubahan Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for match in matches %}
+            {% if match.score1 != 0 or match.score2 != 0 %}
+              <tr>
+                <!-- Tanggal (left-aligned) -->
+                <td class="text-center align-middle">{{ match.match_date|date:"j F Y" }}</td>
+
+                <!-- Menang / Kalah -->
+                <td class="text-center align-middle">
+                  {% if match.athlete1 == athlete_profile %}
+                    {% if match.score1 > match.score2 %}
+                      <span class="text-success">Menang</span>
+                    {% elif match.score2 > match.score1 %}
+                      <span class="text-danger">Kalah</span>
+                    {% else %}
+                      <span class="text-body">Seri</span>
+                    {% endif %}
+                  {% else %}
+                    {% if match.score2 > match.score1 %}
+                      <span class="text-success">Menang</span>
+                    {% elif match.score1 > match.score2 %}
+                      <span class="text-danger">Kalah</span>
+                    {% else %}
+                      <span class="text-body">Seri</span>
+                    {% endif %}
+                  {% endif %}
+                </td>
+
+                <!-- VS -->
+                <td class="text-center align-middle">
+                  {% if match.athlete1 == athlete_profile %}
+                    {{ match.athlete2.user.nickname }}
+                  {% else %}
+                    {{ match.athlete1.user.nickname }}
+                  {% endif %}
+                </td>
+
+                <!-- Skor -->
+                <td class="text-center align-middle">
+                  {% if match.athlete1 == athlete_profile %}
+                    {% if match.score1 > match.score2 %}
+                      <strong class="text-success">{{ match.score1 }}</strong> : {{ match.score2 }}
+                    {% elif match.score1 < match.score2 %}
+                      <strong class="text-danger">{{ match.score1 }}</strong> : {{ match.score2 }}
+                    {% else %}
+                      {{ match.score1 }} : {{ match.score2 }}
+                    {% endif %}
+                  {% else %}
+                    {% if match.score2 > match.score1 %}
+                      <strong class="text-success">{{ match.score2 }}</strong> : {{ match.score1 }}
+                    {% elif match.score2 < match.score1 %}
+                      <strong class="text-danger">{{ match.score2 }}</strong> : {{ match.score1 }}
+                    {% else %}
+                      {{ match.score2 }} : {{ match.score1 }}
+                    {% endif %}
+                  {% endif %}
+                </td>
+
+                <!-- Perubahan Rating -->
+                <td class="text-center align-middle">
+                  {% for rh in match.ratinghistory_set.all %}
+                    {% if rh.athlete == athlete_profile %}
+                      {{ rh.rating_before }} → {{ rh.rating_after }}
+                      {% if rh.rating_change > 0 %}
+                        <span class="text-success">(+{{ rh.rating_change }})</span>
+                      {% elif rh.rating_change < 0 %}
+                        <span class="text-danger">({{ rh.rating_change }})</span>
+                      {% else %}
+                        <span class="text-body">(0)</span>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                </td>
+              </tr>
+            {% endif %}
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center align-middle">Belum ada hasil pertandingan.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  
+  <div class="mb-4">
+    <h3>Hasil Pertandingan Anda</h3>
+    {% for match in matches %}
+      {% if match.score1 != 0 or match.score2 != 0 %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">
+              {% if match.athlete1 == athlete_profile %}
+                {% if match.score1 > match.score2 %}
+                  <strong style="color: green; font-weight: bold;">
+                    {{ match.athlete1.user.nickname }} (M) : {{ match.score1 }}
+                  </strong>
+                  - {{ match.score2 }} {{ match.athlete2.user.nickname }} (K)
+                {% elif match.score2 > match.score1 %}
+                  {{ match.athlete1.user.nickname }} (K) : {{ match.score1 }}
+                  - <strong style="color: green; font-weight: bold;">
+                      {{ match.athlete2.user.nickname }} (M) : {{ match.score2 }}
+                    </strong>
+                {% else %}
+                  {{ match.athlete1.user.nickname }} : {{ match.score1 }}
+                  - {{ match.score2 }} {{ match.athlete2.user.nickname }}
+                {% endif %}
+              {% else %}
+                {% if match.score2 > match.score1 %}
+                  <strong style="color: green; font-weight: bold;">
+                    {{ match.athlete2.user.nickname }} (M) : {{ match.score2 }}
+                  </strong>
+                  - {{ match.score1 }} {{ match.athlete1.user.nickname }} (K)
+                {% elif match.score1 > match.score2 %}
+                  {{ match.athlete2.user.nickname }} (K) : {{ match.score2 }}
+                  - <strong style="color: green; font-weight: bold;">
+                      {{ match.athlete1.user.nickname }} (M) : {{ match.score1 }}
+                    </strong>
+                {% else %}
+                  {{ match.athlete2.user.nickname }} : {{ match.score2 }}
+                  - {{ match.score1 }} {{ match.athlete1.user.nickname }}
+                {% endif %}
+              {% endif %}
+            </h5>
+            <!-- Display the match date -->
+            <p class="card-text">
+              <small class="text-muted">
+                Tanggal Pertandingan: {{ match.match_date|date:"M d, Y H:i" }}
+              </small>
+            </p>
+            {% for rh in match.ratinghistory_set.all %}
+              {% if rh.athlete == athlete_profile %}
+                <p class="card-text">
+                  Perubahan rating: {{ rh.rating_before }} → {{ rh.rating_after }}
+                  {% if rh.rating_change > 0 %}
+                    <span class="text-success">(+{{ rh.rating_change }})</span>
+                  {% elif rh.rating_change < 0 %}
+                    <span class="text-danger">({{ rh.rating_change }})</span>
+                  {% else %}
+                    <span class="text-body">(0)</span>
+                  {% endif %}
+                </p>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <li class="list-group-item">Belum ada hasil pertandingan.</li>
+    {% endfor %}
+  </div>
+  
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2>Verifikasi OTP untuk Email Saat Ini</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- OTP Input -->
+    <div class="mb-3">
+      <label for="otp" class="form-label">Masukkan OTP yang Dikirim ke Email</label>
+      <input type="text" name="otp" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Verifikasi OTP</button>
+  </form>
+</div>
+{% endblock %}

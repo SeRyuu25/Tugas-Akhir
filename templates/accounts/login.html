@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="my-4">
+  <h2>Masuk ke Akun Atlet</h2>
+  <form method="post">
+      {% csrf_token %}
+      <!-- Email -->
+      <div class="mb-3">
+        <label for="{{ form.login.id_for_label }}">Email / Gmail</label>
+        {{ form.login }}
+        {% if form.login.errors %}
+          <div class="text-danger">{{ form.login.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Password + “Forgot?” link -->
+      <div class="mb-3">
+        <label for="{{ form.password.id_for_label }}">Kata Sandi</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="text-danger">{{ form.password.errors }}</div>
+        {% endif %}
+        <div class="mt-1">
+          <a href="{% url 'account_reset_password' %}">Lupa kata sandi Anda?</a>
+        </div>
+      </div>
+
+      <!-- Remember Me checkbox (muncul kalo ACCOUNT_SESSION_REMEMBER = None) -->
+      {% if form.remember %}
+        <div class="mb-3 form-check">
+          {{ form.remember }}
+          <label class="form-check-label" for="{{ form.remember.id_for_label }}">
+            Ingat Saya
+          </label>
+        </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary">Masuk</button>
+  </form>
+  <p class="mt-3">Belum punya akun? <a href="{% url 'account_signup' %}">Daftar di sini</a>.</p>
+</div>
+{% endblock %}

@@ -63,3 +63,68 @@ h1, h2 {
   .round h4 {
     text-align: center;
   }
+
+/* Profile image container */
+.profile-img-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Circle and Dark Background for Image */
+.profile-img-wrapper {
+  width: 120px;
+  height: 120px;
+  background-color: #2e2e2e; /* Dark background */
+  border-radius: 50%; /* Make it circular */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Profile image styles */
+.profile-img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Make sure image fits in the circle */
+  border-radius: 50%; /* This makes the image itself circular */
+  display: block;
+}
+
+/* Hide preview when no image is selected */
+.profile-img-preview[style="display: none;"] {
+  display: none;
+}
+
+/* Hide the default file input */
+.d-none {
+  display: none !important;
+}
+
+/* Style for the custom button */
+label[for="profile_image"] {
+  cursor: pointer;
+  background-color: transparent; /* Use transparent background */
+  border: 2px solid #0069d9; /* Blue border to match the original blue button */
+  color: #0069d9; /* Text color for the button */
+  border-radius: 50px;
+  padding: 10px 20px;
+  text-align: center;
+  display: block;
+  width: 100%;
+  min-width: 300px; /* Ensure the button has a minimum width */
+  margin-top: 10px;
+  font-weight: bold; /* Make the text bold */
+}
+
+label[for="profile_image"]:hover {
+  background-color: #0069d9; /* On hover, the background will turn blue */
+  color: white; /* Text color will change to white */
+}
+
+.errorlist li {
+  color: #dc3545;
+  margin-top: .25rem; 
+}

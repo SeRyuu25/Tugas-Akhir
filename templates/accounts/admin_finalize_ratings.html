@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="my-4">
+  <h2>Finalisasi Rating Awal Atlet</h2>
+
+  <!-- Informational note for admin -->
+  <div class="alert alert-info">
+    Untuk pemain baru, minimal 3 orang IP memberikan rating.
+  </div>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Atlet</th>
+        <th>Info &amp; Rating dari IP</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for athlete in athletes %}
+        <tr>
+          <!-- 1) Athlete + previous divisi -->
+          <td>
+            <strong>{{ athlete.user.nickname }}</strong><br>
+            <small>Divisi Sebelumnya: {{ athlete.previous_divisi }}</small>
+          </td>
+
+          <!-- 2) List of IP ratings -->
+          <td>
+            {% with opinions=athlete.ip_opinions.all %}
+              {% if opinions %}
+                <ul class="mb-0">
+                  {% for opinion in opinions %}
+                    <li>{{ opinion.ip_account.nickname }} – {{ opinion.opinion_rating }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p>Belum ada yang memberikan rating.</p>
+              {% endif %}
+            {% endwith %}
+          </td>
+
+          <!-- 3) Finalize button -->
+          <td>
+            <a
+              href="{% url 'finalize_rating_admin' athlete.id %}"
+              class="btn btn-warning btn-sm"
+            >Finalisasi</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="3" class="text-center">Belum ada atlet yang harus difinalisasi.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
