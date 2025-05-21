@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+from django.contrib.messages import constants as message_constants
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -153,7 +155,6 @@ STATICFILES_DIRS = [
 
 
 # Email Settings
-from decouple import config
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'in-v3.mailjet.com'
@@ -189,7 +190,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Messages
-from django.contrib.messages import constants as message_constants
 
 MESSAGE_TAGS = {
     message_constants.DEBUG:   "secondary",
