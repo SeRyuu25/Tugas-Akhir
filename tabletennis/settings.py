@@ -245,6 +245,8 @@ if not DEBUG:
     # Railway's load balancer usually handles this, but it's a good defense-in-depth.
     SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # For Development Purpose only!!!!!!
 
