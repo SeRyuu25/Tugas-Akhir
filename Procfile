@@ -1,1 +1,1 @@
-web: gunicorn tabletennis.wsgi:application --log-file -
+web: gunicorn tabletennis.wsgi:application --log-file - --log-level debug --enable-stdio-inheritance
