@@ -44,6 +44,10 @@ INSTALLED_APPS = [
     'allauth.account',
     "import_export",
 
+    # Buat media saver (storage)
+    'cloudinary',
+    'cloudinary_storage',
+
     "accounts",
     "dashboard",
     "ratings",
@@ -96,6 +100,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        ssl_require=os.environ.get('DATABASE_URL', '').endswith('sslmode=require')
     )
 }
 
@@ -145,12 +150,10 @@ USE_TZ = True
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
-# Optional: enable GZip & caching
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Explicitly tell Django where to look for static files
 STATICFILES_DIRS = [
-    BASE_DIR / "static",   # Adjust this if your static folder is elsewhere
+    BASE_DIR / "static",
 ]
 
 
@@ -200,12 +203,49 @@ MESSAGE_TAGS = {
 }
 
 
+# For Storage
+
+#DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
+# Cloudinary Config (For media saver / storage)
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
+
+
 # For media (profile picture dll)
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# Security Setting (For Production)
+if not DEBUG:
+    # Ensure cookies are only sent over HTTPS (Railway provides HTTPS)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+
+    # Prevents browsers from MIME-sniffing a response away from the declared content-type
+    SECURE_CONTENT_TYPE_NOSNIFF = config('SECURE_CONTENT_TYPE_NOSNIFF', default=True, cast=bool)
+
+    # Redirect all non-HTTPS requests to HTTPS.
+    # Railway's load balancer usually handles this, but it's a good defense-in-depth.
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 
 
 # For Development Purpose only!!!!!!
 
-AUTH_PASSWORD_VALIDATORS = []  # This is for bypass validator when creating password!!
+# AUTH_PASSWORD_VALIDATORS = []  # This is for bypass validator when creating password!!
