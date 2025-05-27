@@ -26,4 +26,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('', include(('dashboard.urls', 'dashboard'), namespace='dashboard')),
     path('tournaments/', include('tournaments.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # Buat development doang
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

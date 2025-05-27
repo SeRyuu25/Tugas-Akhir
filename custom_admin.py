@@ -1,5 +1,8 @@
 from django.contrib import admin
 from django.contrib.admin import AdminSite
+from django.contrib.sites.models import Site
+from django.contrib.auth.models import Group
+
 from accounts.models import CustomUser, AthleteProfile, IPRatingOpinion, AthleteAccountReference
 from tournaments.models import Tournament, Match
 from ratings.models import RatingHistory
@@ -30,3 +33,6 @@ my_admin_site.register(AthleteAccountReference, AthleteAccountReferenceAdmin)
 my_admin_site.register(Tournament)
 my_admin_site.register(Match)
 my_admin_site.register(RatingHistory)
+
+my_admin_site.register(Site)
+my_admin_site.register(Group)
