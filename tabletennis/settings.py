@@ -231,6 +231,11 @@ CLOUDINARY_STORAGE = {
 
 MEDIA_URL = '/media/'
 
+# Security Settings (Global)
+APP_DOMAIN = config('APP_DOMAIN', default='localhost')
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{APP_DOMAIN}",
+]
 
 # Security Setting (For Production)
 if not DEBUG:
