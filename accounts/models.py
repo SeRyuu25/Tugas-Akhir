@@ -1,7 +1,38 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 # Create your models here.
+
+# Custom User Manager -> buat pas bikin akun (antara yg biasa & yg superadmin)
+class CustomUserManager(BaseUserManager):
+    # Bikin akun biasa
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        if not username:
+            raise ValueError('The Username field must be set')
+        if email: # Normalize email if provided
+            email = self.normalize_email(email)
+        
+        extra_fields.setdefault('role', 'atlet') 
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    # Buat bikin superuser / admin (biar rolenya admin)
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('role', 'admin')
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        if extra_fields.get('role') != 'admin':
+            raise ValueError('Superuser must have role of "admin".')
+
+        return self.create_user(username, email, password, **extra_fields)
 
 # Buat database general user (semua user)
 class CustomUser(AbstractUser):
@@ -23,6 +54,8 @@ class CustomUser(AbstractUser):
     # Buat ganti email, temporary check
     pending_email = models.EmailField(null=True, blank=True, unique=False)
     pending_email_requested_at = models.DateTimeField(null=True, blank=True)
+
+    objects = CustomUserManager()
 
     def __str__(self):
         return f"{self.nickname} - {self.get_role_display()} ({self.username})"
