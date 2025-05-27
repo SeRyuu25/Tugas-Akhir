@@ -6,4 +6,4 @@
 
 {% if code %}{% blocktrans %}Your email verification code is listed below. Please enter it in your open browser window.{% endblocktrans %}
 
-{{ code }}{% else %}{% blocktrans %}To confirm this is correct, go to {{ activate_url }}{% endblocktrans%}{% endif %}{% endautoescape %}{% endblock content %}
+{{ code }}{% else %}{% blocktrans %}To confirm this is correct, go to {{ activate_url }}{% endblocktrans%}{% endif %}{% endwith %}{% endautoescape %}{% endblock content %}
