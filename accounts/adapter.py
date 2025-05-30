@@ -32,10 +32,10 @@ class MyAccountAdapter(DefaultAccountAdapter):
         user = super().save_user(request, user, form, commit=False)
 
         user.role = 'atlet'
-        user.nickname  = form.cleaned_data.get("nickname", user.nickname or "")
-        user.real_name = form.cleaned_data.get("real_name", user.real_name or "")
+        user.nickname  = form.cleaned_data.get("nickname", "")
+        user.real_name = form.cleaned_data.get("real_name", "")
         
-        profile_image_file = request.FILES.get('profile_image')
+        profile_image_file = form.cleaned_data.get('profile_image')
         if profile_image_file:
             # ---- ADD LOGGING HERE ----
             logger.info(f"ADAPTER_DEBUG: Profile image found in request.FILES.")
@@ -44,12 +44,9 @@ class MyAccountAdapter(DefaultAccountAdapter):
             logger.info(f"ADAPTER_DEBUG: File content type: {profile_image_file.content_type}")
             # ---- END LOGGING ----
             user.profile_image = profile_image_file
-        else:
-            logger.info("ADAPTER_DEBUG: No profile image found in request.FILES.")
-            # Handle case where field might have been cleared
-            if 'profile_image' in form.fields and 'profile_image' in form.changed_data and not form.cleaned_data.get('profile_image'):
-                logger.info("ADAPTER_DEBUG: Profile image field was present and cleared by user.")
-                user.profile_image = None
+        elif 'profile_image' in form.changed_data and not profile_image_file: # Field was cleared
+            logger.info("ADAPTER_DEBUG: Profile image field was present in form and cleared by user.")
+            user.profile_image = None
 
         user.username = generate_unique_username(8)
 

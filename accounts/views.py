@@ -87,7 +87,6 @@ class CustomSignupView(SignupView):
               logger.debug("Profile already exists for user: %s", user.username)
         """
         
-        save_user_again = False # Flag to see if we need to save the user model
         fields_to_update_on_user = []
 
         # set ptm & previous_divisi
@@ -95,7 +94,7 @@ class CustomSignupView(SignupView):
         if user.ptm != user_ptm: # Only update if different
             user.ptm = user_ptm
             fields_to_update_on_user.append('ptm')
-            save_user_again = True
+            logger.info(f"VIEW_DEBUG: Setting PTM for {user.username} to '{user.ptm}'")
         
         """"
         if self.request.session.get("is_new_player", True):
@@ -127,30 +126,31 @@ class CustomSignupView(SignupView):
                         try:
                             ref = AthleteAccountReference.objects.get(pk=ref_id)
                             new_previous_divisi = ref.divisi
-                            if not ref.sudah_ada_akun: # Only update if not already marked
+                            if not ref.sudah_ada_akun:
                                 ref.sudah_ada_akun = True
-                                ref.save() # Save AthleteAccountReference
+                                ref.save()
                         except AthleteAccountReference.DoesNotExist:
                             logger.error(f"Reference ID {ref_id} not found for user {user.username}")
-                            new_previous_divisi = "error: ref not found" # Or handle appropriately
+                            new_previous_divisi = "error: ref not found"
                     else: # Should not happen if flow is correct
                         logger.warning(f"Not a new player but no ref_id in session for user {user.username}")
-                        new_previous_divisi = "unknown"
+                        new_previous_divisi = "tidak diketahui"
                 
                 if profile.previous_divisi != new_previous_divisi:
                     profile.previous_divisi = new_previous_divisi
                     profile.save() # Save AthleteProfile
+                    logger.info(f"VIEW_DEBUG: Set previous_divisi for {user.username} to '{profile.previous_divisi}'")
 
             except AthleteProfile.DoesNotExist:
                 logger.error(f"AthleteProfile not found for user {user.username} in CustomSignupView.form_valid. Adapter might have failed to create it or role not 'atlet' initially.")
                 # Handle this error case - perhaps create the profile here if absolutely necessary
                 # For now, this indicates a potential logic flaw if adapter is supposed to create it.
 
-        # If user.ptm was changed, save only that field.
-        # Avoid saving the whole user object again if profile_image was already handled.
-        if save_user_again and fields_to_update_on_user:
+        # If there are fields like 'ptm' to update on the user object, save it again
+        # BUT ONLY update those specific fields.
+        if fields_to_update_on_user:
             user.save(update_fields=fields_to_update_on_user)
-            logger.info(f"CustomSignupView: Updated user fields: {fields_to_update_on_user}")
+            logger.info(f"VIEW_DEBUG: Final save for user {user.username}, updating fields: {fields_to_update_on_user}")
 
         # clear session
         for k in ("ref_nickname","ref_ptm","ref_id","is_new_player"):
