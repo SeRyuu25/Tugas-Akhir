@@ -34,14 +34,43 @@ class MyAccountAdapter(DefaultAccountAdapter):
         user.role = 'atlet'
         user.nickname  = form.cleaned_data.get("nickname", "")
         user.real_name = form.cleaned_data.get("real_name", "")
-        if request.FILES.get('profile_image'):
-            user.profile_image = request.FILES['profile_image']
+        
+        profile_image_file = request.FILES.get('profile_image')
+        if profile_image_file:
+            # ---- ADD LOGGING HERE ----
+            logger.info(f"ADAPTER_DEBUG: Profile image found in request.FILES.")
+            logger.info(f"ADAPTER_DEBUG: File name: {profile_image_file.name}")
+            logger.info(f"ADAPTER_DEBUG: File size: {profile_image_file.size}")
+            logger.info(f"ADAPTER_DEBUG: File content type: {profile_image_file.content_type}")
+            # ---- END LOGGING ----
+            user.profile_image = profile_image_file
+        else:
+            logger.info("ADAPTER_DEBUG: No profile image found in request.FILES.")
+            # Handle case where field might have been cleared
+            if 'profile_image' in form.fields and 'profile_image' in form.changed_data and not form.cleaned_data.get('profile_image'):
+                logger.info("ADAPTER_DEBUG: Profile image field was present and cleared by user.")
+                user.profile_image = None
+
         user.username = generate_unique_username(8)
+        
         if commit:
-            logger.debug("P1 : MyAccountAdapter.save_user: commit=True, about to save user & create profile")
-            user.save()
-            logger.debug("P2 : MyAccountAdapter.save_user: commit=True, about to save user & create profile")
-        if user.role == "atlet":
-            profile, created = AthleteProfile.objects.get_or_create(user=user)
-            logger.debug("P3 : MyAccountAdapter.save_user: commit=True, about to save user & create profile")
+            logger.info(f"ADAPTER_DEBUG: Commit is True. Attempting to save user. Profile image field value: {getattr(user, 'profile_image', 'Not Set')}")
+            try:
+                user.save() # This is where the ImageField saving (and Cloudinary upload) happens
+                logger.info(f"ADAPTER_DEBUG: User (pk={user.pk}) saved successfully in adapter.")
+                
+                # Create AthleteProfile only after user is saved and has an ID, and if role is 'atlet'
+                if user.role == "atlet":
+                    profile, created = AthleteProfile.objects.get_or_create(user=user)
+                    if created:
+                        logger.info(f"ADAPTER_DEBUG: AthleteProfile created for user {user.username} (pk={user.pk}).")
+                    else:
+                        logger.info(f"ADAPTER_DEBUG: AthleteProfile already existed for user {user.username} (pk={user.pk}).")
+                        
+            except Exception as e:
+                logger.error(f"ADAPTER_DEBUG: Error during user.save() or AthleteProfile creation in adapter: {e}", exc_info=True)
+                raise # Re-raise the exception so Django's error handling (and DEBUG page) can show it
+        else:
+            logger.info("ADAPTER_DEBUG: Commit is False. User object not saved by adapter at this stage.")
+        
         return user

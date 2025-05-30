@@ -35,4 +35,3 @@ my_admin_site.register(Match)
 my_admin_site.register(RatingHistory)
 
 my_admin_site.register(Site)
-my_admin_site.register(Group)
