@@ -2,8 +2,17 @@
 {% load account %}
 {% load i18n %}
 
-{% block content %}{% autoescape off %}{% with user.nickname as user_display %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}You're receiving this email because user {{ user_display }} has given your email address to register an account on {{ site_domain }}.{% endblocktrans %}
+{% block content %}
+{% autoescape off %}
+{% with user.nickname as user_display %}
+Anda menerima email ini karena pengguna {{ user_display }} telah memberikan alamat email Anda untuk mendaftarkan akun di {{ current_site.domain }}.
 
-{% if code %}{% blocktrans %}Your email verification code is listed below. Please enter it in your open browser window.{% endblocktrans %}
+{% if code %}Kode verifikasi email Anda tercantum di bawah ini. Silakan masukkan di jendela browser Anda yang terbuka.
 
-{{ code }}{% else %}{% blocktrans %}To confirm this is correct, go to {{ activate_url }}{% endblocktrans%}{% endif %}{% endwith %}{% endautoescape %}{% endblock content %}
+{{ code }}
+
+{% else %}Untuk mengonfirmasi bahwa ini benar, kunjungi {{ activate_url }}
+{% endif %}
+{% endwith %}
+{% endautoescape %}
+{% endblock content %}
