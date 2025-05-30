@@ -1,0 +1,2 @@
+{% load i18n %}
+{% autoescape off %}Kode OTP Anda untuk Perubahan Email di {{ current_site.name }}{% endautoescape %}

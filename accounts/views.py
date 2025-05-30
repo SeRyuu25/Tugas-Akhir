@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.core.cache import cache
 from django.core.mail import send_mail
@@ -10,6 +11,7 @@ from django.utils import timezone
 from django.db.models import Q, Avg
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView
+from django.template.loader import render_to_string
 
 from .forms import IPAccountCreationForm, IPRatingOpinionForm, ManualIPOpinionForm, CustomAccountUpdateForm, ReferenceCheckForm
 from tournaments.models import Tournament, Match
@@ -280,16 +282,30 @@ def account_security_settings(request):
 @login_required
 def request_email_change(request):
     if request.method == 'POST':
-        # Step 1: Send OTP to current email address
         otp = generate_otp()
+
+        # Persiapan context buat ngirim email
+        current_site = get_current_site(request)
+        context = {
+            'user': request.user,
+            'otp': otp,
+            'current_site': current_site,
+        }
+
+        # Render subject dan text body dari template
+        subject = render_to_string('account/email/otp_email_subject.txt', context).strip()
+        message = render_to_string('account/email/otp_email_message.txt', context)
+
+        # Kirim Email
         send_mail(
-            'Your OTP for email change',
-            f'Your OTP is {otp}',
+            subject,
+            message,
             settings.DEFAULT_FROM_EMAIL,
-            [request.user.email],  # Send OTP to the current email
+            [request.user.email], # Send OTP to the current email
+            fail_silently=False, # Set to True if you don't want errors to stop execution, but False is better for debugging
         )
 
-        # Store OTP temporarily for verification
+        # Simpan OTP sementara untuk verifikasi
         cache.set(f"otp_{request.user.id}", otp, timeout=300)  # OTP valid for 5 minutes
 
         return redirect('verify_current_email_otp')  # Redirect to OTP verification page
