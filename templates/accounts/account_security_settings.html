@@ -10,11 +10,8 @@
   <!-- Section for Changing Email -->
   <div class="mb-4">
     <h3>Ubah Alamat Email</h3>
-    <p>Email Saat Ini: {{ user.email|mask_email }}</p>
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit" name="change_email" class="btn btn-primary">Kirim OTP ke Email Saat Ini</button>
-    </form>
+    <p>Untuk mengubah alamat email Anda, klik tombol di bawah ini.</p>
+    <a href="{% url 'request_email_change' %}" class="btn btn-primary">Ubah Alamat Email</a>
   </div>
 
   <!-- Section for Changing Password -->

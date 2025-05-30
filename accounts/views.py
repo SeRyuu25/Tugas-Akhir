@@ -256,21 +256,7 @@ def account_security_settings(request):
     if request.method == 'POST':
         # Change Email Process
         if 'change_email' in request.POST:
-            # Step 1: Send OTP to current email address
-            if is_rate_limited(request.user.id):
-                messages.error(request, "Too many OTP requests. Please try again later.Terlalu banyak permintaan OTP. Mohon tunggu sebentar lalu coba kembali.")
-                return redirect('account_security_settings')
-            
-            otp = generate_otp()
-            send_mail(
-                'Your OTP for email change',
-                f'Your OTP is {otp}',
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],  # Send OTP to the current email
-            )
-            cache.set(f"otp_{request.user.id}", otp, timeout=300)  # OTP valid for 5 minutes
-
-            return redirect('verify_current_email_otp')  # Redirect to OTP verification page
+            return redirect('request_email_change')
 
         # Password Change Process (handled by Allauth)
         elif 'change_password' in request.POST:
@@ -282,6 +268,11 @@ def account_security_settings(request):
 @login_required
 def request_email_change(request):
     if request.method == 'POST':
+        # Cek apakah spam
+        if is_rate_limited(request.user.id):
+                messages.error(request, "Terlalu banyak permintaan OTP. Mohon tunggu sebentar lalu coba kembali.")
+                return redirect('request_email_change')
+        
         otp = generate_otp()
 
         # Persiapan context buat ngirim email

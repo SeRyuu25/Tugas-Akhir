@@ -3,18 +3,21 @@
 
 {% block content %}
 <div class="container my-4">
+  <a href="{% url 'account_security_settings' %}" class="btn btn-outline-primary mb-3">&larr; Kembali</a>
   <h2>Ubah Alamat Email</h2>
-  <form method="post">
-    {% csrf_token %}
-    
-    <!-- Display Current Email with Censorship -->
-    <div class="mb-3">
-      <label class="form-label">Email Saat Ini</label>
-      <input type="text" class="form-control" value="{{ user.email|slice:":2" }}****{{ user.email|slice:"-5" }}" readonly>
-    </div>
 
+  <!-- Display Current Email with Censorship -->
+  <div class="mb-3">
+    <label class="form-label">Email Saat Ini</label>
+    <input type="text" class="form-control" value="{{ user.email|slice:":2" }}****{{ user.email|slice:"-5" }}" readonly>
+    <p>Email Saat Ini: {{ user.email|mask_email }}</p>
+    <p>Kami akan mengirimkan kode OTP ke alamat email Anda saat ini untuk memverifikasi bahwa Anda adalah pemilik akun ini.</p>
+  </div>
+  
+  <form method="post" action="{% url 'request_email_change' %}">
+    {% csrf_token %}
     <!-- Send OTP Button -->
-    <button type="submit" class="btn btn-primary">Kirim OTP ke Email Saat Ini</button>
+    <button type="submit" class="btn btn-primary">Kirim Kode OTP</button>
   </form>
 </div>
 {% endblock %}
