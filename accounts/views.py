@@ -76,15 +76,28 @@ class CustomSignupView(SignupView):
         return init
 
     def form_valid(self, form):
-        # first let allauth create the user
+        # allauth bikin user
         resp = super().form_valid(form)
         user = self.user
+
+        """
         if user.role == "atlet":
           profile, created = AthleteProfile.objects.get_or_create(user=user)
           if not created:
               logger.debug("Profile already exists for user: %s", user.username)
+        """
+        
+        save_user_again = False # Flag to see if we need to save the user model
+        fields_to_update_on_user = []
+
         # set ptm & previous_divisi
-        user.ptm = self.request.session.get("ref_ptm", "")
+        user_ptm = self.request.session.get("ref_ptm", "")
+        if user.ptm != user_ptm: # Only update if different
+            user.ptm = user_ptm
+            fields_to_update_on_user.append('ptm')
+            save_user_again = True
+        
+        """"
         if self.request.session.get("is_new_player", True):
             profile.previous_divisi = "pemain baru"
         else:
@@ -94,9 +107,55 @@ class CustomSignupView(SignupView):
             ref.save()
         user.save()
         profile.save()
+        """
+
+        if user.role == "atlet":
+            try:
+                # The adapter should have created this if the user's role was set to 'atlet' before its save.
+                # If using get_or_create here, it's redundant if adapter guarantees creation.
+                # Let's assume adapter correctly created it.
+                profile = AthleteProfile.objects.get(user=user) # Get the profile
+                
+                is_new_player = self.request.session.get("is_new_player", True)
+                new_previous_divisi = ""
+
+                if is_new_player:
+                    new_previous_divisi = "pemain baru"
+                else:
+                    ref_id = self.request.session.get("ref_id")
+                    if ref_id: # Ensure ref_id exists
+                        try:
+                            ref = AthleteAccountReference.objects.get(pk=ref_id)
+                            new_previous_divisi = ref.divisi
+                            if not ref.sudah_ada_akun: # Only update if not already marked
+                                ref.sudah_ada_akun = True
+                                ref.save() # Save AthleteAccountReference
+                        except AthleteAccountReference.DoesNotExist:
+                            logger.error(f"Reference ID {ref_id} not found for user {user.username}")
+                            new_previous_divisi = "error: ref not found" # Or handle appropriately
+                    else: # Should not happen if flow is correct
+                        logger.warning(f"Not a new player but no ref_id in session for user {user.username}")
+                        new_previous_divisi = "unknown"
+                
+                if profile.previous_divisi != new_previous_divisi:
+                    profile.previous_divisi = new_previous_divisi
+                    profile.save() # Save AthleteProfile
+
+            except AthleteProfile.DoesNotExist:
+                logger.error(f"AthleteProfile not found for user {user.username} in CustomSignupView.form_valid. Adapter might have failed to create it or role not 'atlet' initially.")
+                # Handle this error case - perhaps create the profile here if absolutely necessary
+                # For now, this indicates a potential logic flaw if adapter is supposed to create it.
+
+        # If user.ptm was changed, save only that field.
+        # Avoid saving the whole user object again if profile_image was already handled.
+        if save_user_again and fields_to_update_on_user:
+            user.save(update_fields=fields_to_update_on_user)
+            logger.info(f"CustomSignupView: Updated user fields: {fields_to_update_on_user}")
+
         # clear session
         for k in ("ref_nickname","ref_ptm","ref_id","is_new_player"):
             self.request.session.pop(k, None)
+
         return resp
 
 # Buat bikin akun IP oleh admin / superuser

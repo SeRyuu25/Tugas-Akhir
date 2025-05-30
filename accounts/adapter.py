@@ -32,8 +32,8 @@ class MyAccountAdapter(DefaultAccountAdapter):
         user = super().save_user(request, user, form, commit=False)
 
         user.role = 'atlet'
-        user.nickname  = form.cleaned_data.get("nickname", "")
-        user.real_name = form.cleaned_data.get("real_name", "")
+        user.nickname  = form.cleaned_data.get("nickname", user.nickname or "")
+        user.real_name = form.cleaned_data.get("real_name", user.real_name or "")
         
         profile_image_file = request.FILES.get('profile_image')
         if profile_image_file:
@@ -52,7 +52,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
                 user.profile_image = None
 
         user.username = generate_unique_username(8)
-        
+
         if commit:
             logger.info(f"ADAPTER_DEBUG: Commit is True. Attempting to save user. Profile image field value: {getattr(user, 'profile_image', 'Not Set')}")
             try:
