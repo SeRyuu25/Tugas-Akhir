@@ -2,13 +2,11 @@
 {% load account %}
 {% load i18n %}
 
-{% block content %}{% autoescape off %}{% with user.nickname as user_display %}
-Halo {{ user_display }},
+{% block content %}{% autoescape off %}{% with user.nickname as user_display %}Halo {{ user_display }},
 
 Kode OTP Anda untuk perubahan alamat email adalah:
 {{ otp }}
 
 Kode ini berlaku selama 5 menit. Mohon jangan berikan kode ini kepada siapa pun.
 
-Jika Anda tidak meminta perubahan ini, silakan abaikan email ini.
-{% endwith %}{% endautoescape %}{% endblock content %}
+Jika Anda tidak meminta perubahan ini, silakan abaikan email ini.{% endwith %}{% endautoescape %}{% endblock content %}
