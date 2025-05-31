@@ -69,7 +69,7 @@ class AthleteProfile(models.Model):
     # Nambahin atribut tentang atlet nanti di sini
 
     def __str__(self):
-        return f"Profile Atlet untuk {self.user.nickname} ({self.user.username})"
+        return f"Profile Atlet - {self.user.nickname} ({self.user.username})"
 
 # Buat database referensi atlet pas daftar
 class AthleteAccountReference(models.Model):
