@@ -412,7 +412,7 @@ def create_manual_rating(request):
             opinion.ip_account = request.user
             opinion.save()
             messages.success(request, "Rating Anda telah disimpan.")
-            return redirect('accounts:profile')
+            return redirect('profile')
     else:
         form = ManualIPOpinionForm()
     return render(request, 'accounts/create_manual_rating.html', {'form': form})
@@ -467,4 +467,4 @@ def finalize_rating_admin(request, athlete_id):
         messages.success(request, f"Rating awal {athlete.user.nickname} berhasil difinalisasi dengan rating {athlete.current_rating}.")
     else:
         messages.error(request, "Belum ada yang memberikan rating untuk atlet ini.")
-    return redirect('accounts:admin_finalize_ratings')
+    return redirect('admin_finalize_ratings')
