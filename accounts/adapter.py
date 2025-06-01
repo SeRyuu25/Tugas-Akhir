@@ -37,37 +37,25 @@ class MyAccountAdapter(DefaultAccountAdapter):
         
         profile_image_file = form.cleaned_data.get('profile_image')
         if profile_image_file:
-            # ---- ADD LOGGING HERE ----
-            logger.info(f"ADAPTER_DEBUG: Profile image found in request.FILES.")
-            logger.info(f"ADAPTER_DEBUG: File name: {profile_image_file.name}")
-            logger.info(f"ADAPTER_DEBUG: File size: {profile_image_file.size}")
-            logger.info(f"ADAPTER_DEBUG: File content type: {profile_image_file.content_type}")
-            # ---- END LOGGING ----
             user.profile_image = profile_image_file
-        elif 'profile_image' in form.changed_data and not profile_image_file: # Field was cleared
-            logger.info("ADAPTER_DEBUG: Profile image field was present in form and cleared by user.")
+        elif 'profile_image' in form.changed_data and not profile_image_file:
             user.profile_image = None
 
         user.username = generate_unique_username(8)
 
         if commit:
-            logger.info(f"ADAPTER_DEBUG: Commit is True. Attempting to save user. Profile image field value: {getattr(user, 'profile_image', 'Not Set')}")
             try:
-                user.save() # This is where the ImageField saving (and Cloudinary upload) happens
-                logger.info(f"ADAPTER_DEBUG: User (pk={user.pk}) saved successfully in adapter.")
+                user.save()
                 
-                # Create AthleteProfile only after user is saved and has an ID, and if role is 'atlet'
                 if user.role == "atlet":
                     profile, created = AthleteProfile.objects.get_or_create(user=user)
-                    if created:
-                        logger.info(f"ADAPTER_DEBUG: AthleteProfile created for user {user.username} (pk={user.pk}).")
-                    else:
-                        logger.info(f"ADAPTER_DEBUG: AthleteProfile already existed for user {user.username} (pk={user.pk}).")
                         
             except Exception as e:
-                logger.error(f"ADAPTER_DEBUG: Error during user.save() or AthleteProfile creation in adapter: {e}", exc_info=True)
-                raise # Re-raise the exception so Django's error handling (and DEBUG page) can show it
+                # Log kalo tiba" error
+                logger.error(f"ADAPTER_ERROR: Error during user.save() or AthleteProfile creation in adapter for user {user.username if user.username else 'unknown'}: {e}", exc_info=True)
+                raise
         else:
-            logger.info("ADAPTER_DEBUG: Commit is False. User object not saved by adapter at this stage.")
-        
+            # Log kalo commitnya entah kenpaa false
+            logger.info(f"ADAPTER_INFO: Commit is False for user {user.username if user.username else 'unknown'}. User object not saved by adapter at this stage.")
+            
         return user
