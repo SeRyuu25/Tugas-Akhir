@@ -173,12 +173,12 @@ def profile(request):
         athlete_profile = user.athlete_profile
         upcoming_tournaments = Tournament.objects.filter(
             participants=athlete_profile,  # use the participants relation
-            start_date__gte=timezone.now()  # gte = greater than / equal
-        )
+            is_finished=False  # check is finished or not
+        ).order_by('start_date')
         finished_tournaments = Tournament.objects.filter(
             participants=athlete_profile,
-            start_date__lt=timezone.now()  # lt = less than
-        )
+            is_finished=True
+        ).order_by('-start_date')
         matches = Match.objects.filter(
             Q(athlete1=athlete_profile) | Q(athlete2=athlete_profile)
         ).order_by('-match_date')
