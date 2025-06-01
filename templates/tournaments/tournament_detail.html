@@ -104,8 +104,7 @@
                   <img 
                     src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                     alt="{{ match.athlete1.user.nickname }}"
-                    class="rounded-circle me-2"
-                    style="width:60px; height:60px; object-fit: cover;"
+                    class="rounded-circle me-2 match-athlete-pfp"
                   >
                   <span>{{ match.athlete1.user.nickname }}</span>
                 </div>
@@ -115,8 +114,7 @@
                   <img 
                     src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                     alt="{{ match.athlete2.user.nickname }}"
-                    class="rounded-circle me-2"
-                    style="width:60px; height:60px; object-fit: cover;"
+                    class="rounded-circle me-2 match-athlete-pfp"
                   >
                   <span>{{ match.athlete2.user.nickname }}</span>
                 </div>
@@ -134,8 +132,7 @@
                     <img 
                       src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete1.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <strong style="color: green; font-weight: bold;">{{ match.athlete1.user.nickname }} (M) : {{ match.score1 }}</strong>
                   </div>
@@ -144,8 +141,7 @@
                     <img 
                       src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete2.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <strong style="color: red; font-weight: bold;">{{ match.athlete2.user.nickname }} (K) : {{ match.score2 }}</strong>
                   </div>
@@ -182,8 +178,7 @@
                     <img 
                       src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete2.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <strong style="color: green; font-weight: bold;">{{ match.athlete2.user.nickname }} (M) : {{ match.score2 }}</strong>
                   </div>
@@ -192,8 +187,7 @@
                     <img 
                       src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete1.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <strong style="color: red; font-weight: bold;">{{ match.athlete1.user.nickname }} (K) : {{ match.score1 }}</strong>
                   </div>
@@ -230,8 +224,7 @@
                     <img 
                       src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete1.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <span>{{ match.athlete1.user.nickname }} : {{ match.score1 }}</span>
                   </div>
@@ -240,8 +233,7 @@
                     <img 
                       src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}"
                       alt="{{ match.athlete2.user.nickname }}"
-                      class="rounded-circle me-2"
-                      style="width:60px; height:60px; object-fit: cover;"
+                      class="rounded-circle me-2 match-athlete-pfp"
                     >
                     <span>{{ match.athlete2.user.nickname }} : {{ match.score2 }}</span>
                   </div>

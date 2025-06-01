@@ -128,3 +128,24 @@ label[for="profile_image"]:hover {
   color: #dc3545;
   margin-top: .25rem; 
 }
+
+.match-athlete-pfp {
+    width: 60px; /* Default width for larger screens */
+    height: 60px; /* Default height for larger screens */
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+}
+
+/* Media Query for mobile devices */
+@media (max-width: 767px) {
+    .match-athlete-pfp {
+        width: 40px;  /* Smaller width for mobile */
+        height: 40px; /* Smaller height for mobile */
+    }
+}
+
+@media (max-width: 575px) {
+    .match-athlete-pfp {
+        width: 35px;
+        height: 35px;
+    }
+}
