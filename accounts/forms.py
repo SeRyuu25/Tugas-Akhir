@@ -34,7 +34,7 @@ class CustomSignupForm(SignupForm):
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
-        # Check *all* addresses (verified or not) so you can’t reuse an unconfirmed one either
+        # Buat cek email udh kepake ato belom
         if EmailAddress.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(
                 "Alamat email ini sudah terdaftar. Silakan gunakan email lain."
@@ -77,19 +77,60 @@ class ReferenceCheckForm(forms.Form):
 
 # Buat registrasi IP account
 class IPAccountCreationForm(UserCreationForm):
-    nickname  = forms.CharField(required=True, max_length=100)
-    real_name = forms.CharField(required=True, max_length=100)
+    nickname  = forms.CharField(
+        required=True, 
+        max_length=100,
+        label="Nama Panggilan",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    real_name = forms.CharField(
+        required=True, 
+        max_length=100,
+        label="Nama Lengkap",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    email = forms.EmailField(
+        required=True,
+        label="Alamat Email",
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
+
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ('nickname', 'real_name', 'email',)
+        fields = ('nickname', 'real_name', 'email')
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if email:
+            email = email.lower()
+            if EmailAddress.objects.filter(email__iexact=email).exists() or \
+               CustomUser.objects.filter(email__iexact=email).exists():
+                raise forms.ValidationError(
+                    "Alamat email ini sudah terdaftar atau sedang digunakan. Silakan gunakan email lain."
+                )
+        else:
+             raise forms.ValidationError("Alamat email wajib diisi.")
+        return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # Role fix jadi buat IP aja
+        
+        user.nickname = self.cleaned_data.get('nickname')
+        user.real_name = self.cleaned_data.get('real_name')
+
+        # Set role and generate username
         user.role = 'ip'
         user.username = generate_unique_username(8)
+        
         if commit:
             user.save()
+            if EmailAddress.objects.filter(user=user, email=user.email).count() == 0:
+                 EmailAddress.objects.create(
+                     user=user,
+                     email=user.email,
+                     primary=True,
+                     verified=True
+                 )
         return user
 
 # Buat masukin initial rating dari IP
