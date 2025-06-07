@@ -3,6 +3,8 @@ from django.contrib.admin import AdminSite
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import Group
 
+from allauth.account.models import EmailAddress
+
 from accounts.models import CustomUser, AthleteProfile, IPRatingOpinion, AthleteAccountReference
 from tournaments.models import Tournament, Match
 from ratings.models import RatingHistory
@@ -10,7 +12,7 @@ from accounts.admin import CustomUserAdmin
 from accounts.admin import AthleteAccountReferenceAdmin
 
 class MyAdminSite(AdminSite):
-    site_header = 'My Custom Admin Dashboard'
+    site_header = 'Tenis Meja Admin Dashboard'
     site_title = 'Custom Admin'
     index_title = 'Dashboard'
 
@@ -35,3 +37,5 @@ my_admin_site.register(Match)
 my_admin_site.register(RatingHistory)
 
 my_admin_site.register(Site)
+
+my_admin_site.register(EmailAddress)

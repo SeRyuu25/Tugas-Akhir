@@ -13,11 +13,11 @@
     <header>
       <nav class="navbar navbar-expand-lg custom-navbar rounded fixed-top" aria-label="navbar sistem informasi">
         <div class="container-fluid">
+          <a class="navbar-brand" href="{% url 'dashboard:home' %}">Tenis Meja</a>
+
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSistemInformasi" aria-controls="navbarSistemInformasi" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
-    
-          <a class="navbar-brand" href="{% url 'dashboard:home' %}">Tenis Meja</a>
           
           <div class="collapse navbar-collapse" id="navbarSistemInformasi">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
@@ -58,11 +58,11 @@
                 </li>
               {% else %}
                 <li class="nav-item m-2">
-                  <a class="btn custom-btn" href="{% url 'account_login' %}">Masuk</a>
+                  <div class="btn-group" role="group" aria-label="Tombol Masuk dan Daftar">
+                    <a class="btn custom-btn" href="{% url 'account_login' %}">Masuk</a>
+                    <a class="btn custom-btn" href="{% url 'account_ref_check' %}">Daftar</a>
+                  </div>
                 </li>
-                <li class="nav-item m-2">
-                  <a class="btn custom-btn" href="{% url 'account_ref_check' %}">Daftar</a>
-                </li>              
               {% endif %}
             </ul>
           </div>
