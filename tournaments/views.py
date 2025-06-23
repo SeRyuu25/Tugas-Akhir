@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .forms import TournamentForm
+from .forms import TournamentForm, MatchForm
 from .models import Tournament, Match
 from accounts.models import AthleteProfile
 from ratings.models import RatingHistory
@@ -121,13 +121,11 @@ def create_first_round_matches(tournament):
     for i in range(num_matches):
         athlete1 = participants[2 * i]
         athlete2 = participants[2 * i + 1]
-        # Buat bikin pertandingan (match) ronde 1. Skor dianggap 0 dulu
+        # Buat bikin pertandingan (match) ronde 1.
         Match.objects.create(
             tournament=tournament,
             athlete1=athlete1,
             athlete2=athlete2,
-            score1=0,
-            score2=0,
             round=1
         )
     return "Pertandingan babak pertama berhasil dibuat."
@@ -139,75 +137,87 @@ def record_match(request, tournament_id, match_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     match = get_object_or_404(Match, id=match_id, tournament=tournament)
 
-    # Check if the match has already been recorded
-    if match.score1 != 0 or match.score2 != 0:
+    # Check if the match is already concluded to prevent edits
+    if match.winner() is not None:
         messages.error(request, "Hasil pertandingan ini sudah disimpan dan tidak dapat diubah.")
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
     if request.method == 'POST':
-        # Handle form submission
-        score1 = int(request.POST.get('score1'))
-        score2 = int(request.POST.get('score2'))
+        # Bind the POST data to a MatchForm instance linked to our specific match
+        form = MatchForm(request.POST, instance=match)
 
-        # Confirm submission
-        confirm = request.POST.get('confirm')
-        if confirm != 'yes':
-            messages.error(request, "Anda harus mengkonfirmasi hasil pertandingan sebelum disimpan.")
+        # Check for confirmation checkbox
+        if 'confirm' not in request.POST:
+            messages.error(request, "Anda harus mencentang kotak konfirmasi sebelum menyimpan hasil.")
+            # Re-render the form with the data the user already entered
             return render(request, 'tournaments/record_match.html', {
                 'tournament': tournament,
                 'match': match,
-                'score1': score1,
-                'score2': score2,
+                'form': form, # Pass the form back with its data
             })
 
-        # Update match scores
-        match.score1 = score1
-        match.score2 = score2
-        match.save()
+        if form.is_valid():
+            # Save the form to update the match instance with the new set scores.
+            # The 'match' object is now updated with the scores from the form.
+            form.save()
 
-        # Process ELO rating changes
-        old_rating1 = match.athlete1.current_rating
-        old_rating2 = match.athlete2.current_rating
-        new_rating1, new_rating2 = process_match(match.athlete1, match.athlete2, score1, score2)
+            # Now that scores are saved, get the number of sets won for each player
+            wins1 = match.total_sets_won(match.athlete1)
+            wins2 = match.total_sets_won(match.athlete2)
 
-        # Update athlete profiles
-        match.athlete1.current_rating = new_rating1
-        match.athlete1.save()
-        match.athlete2.current_rating = new_rating2
-        match.athlete2.save()
+            # Process ELO and create rating history only if the match has a winner
+            if wins1 >= 3 or wins2 >= 3:
+                # Store the ratings *before* they are changed
+                old_rating1 = match.athlete1.current_rating
+                old_rating2 = match.athlete2.current_rating
 
-        # Create rating history records
-        RatingHistory.objects.create(
-            athlete=match.athlete1,
-            match=match,
-            rating_before=old_rating1,
-            rating_after=new_rating1,
-            rating_change=new_rating1 - old_rating1
-        )
-        RatingHistory.objects.create(
-            athlete=match.athlete2,
-            match=match,
-            rating_before=old_rating2,
-            rating_after=new_rating2,
-            rating_change=new_rating2 - old_rating2
-        )
+                # Calculate new ratings
+                new_rating1, new_rating2 = process_match(match.athlete1, match.athlete2, wins1, wins2)
 
-        # Check if the current round is complete
-        if is_round_complete(tournament, match.round):
-            generate_next_round(tournament, match.round, request)
+                # Update athlete profiles with their new ratings
+                match.athlete1.current_rating = new_rating1
+                match.athlete1.save()
+                match.athlete2.current_rating = new_rating2
+                match.athlete2.save()
 
-            # If the tournament is over, mark it as finished
-            if match.round == get_final_round(tournament.player_limit):
-                tournament.is_finished = True
-                tournament.save()
+                # Create rating history records for both players
+                RatingHistory.objects.create(
+                    athlete=match.athlete1,
+                    match=match,
+                    rating_before=old_rating1,
+                    rating_after=new_rating1,
+                    rating_change=new_rating1 - old_rating1
+                )
+                RatingHistory.objects.create(
+                    athlete=match.athlete2,
+                    match=match,
 
-        messages.success(request, "Hasil pertandingan berhasil disimpan.")
-        return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+                    rating_before=old_rating2,
+                    rating_after=new_rating2,
+                    rating_change=new_rating2 - old_rating2
+                )
 
-    # Render the form for GET requests
+            # After saving the match, check if this completes the round
+            current_round_number = match.round
+            if is_round_complete(tournament, current_round_number):
+                # If the round is complete, this message will be added...
+                messages.info(request, f"Semua pertandingan di ronde {current_round_number} telah selesai.")
+                # ...and then this function will try to generate the next round.
+                generate_next_round(tournament, current_round_number, request)
+
+            messages.success(request, "Hasil pertandingan berhasil disimpan.")
+            return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+        else:
+            # If the form is not valid, show the errors
+            messages.error(request, "Terdapat error pada data yang dimasukkan. Mohon periksa kembali skor.")
+
+    else: # For GET requests
+        form = MatchForm(instance=match)
+
     return render(request, 'tournaments/record_match.html', {
         'tournament': tournament,
         'match': match,
+        'form': form,
     })
 
 # Func buat cek 1 ronde udh beres ato blom
@@ -216,44 +226,43 @@ def is_round_complete(tournament, round_number):
     Check if all matches in the given round are completed.
     """
     matches = tournament.matches.filter(round=round_number)
-    return all(match.score1 != 0 and match.score2 != 0 for match in matches)
+    return all(match.winner() is not None for match in matches)
 
 # Func buat generate ronde selanjutnya kalo 1 ronde udh beres
 def generate_next_round(tournament, current_round, request):
-    """
-    Generate the next round by pairing the winners of the current round.
-    """
-    # Get all matches from the current round
     current_matches = tournament.matches.filter(round=current_round)
+    winners = [m.winner() for m in current_matches if m.winner() is not None]
 
-    # Collect the winners of the current round
-    winners = []
-    for match in current_matches:
-        if match.score1 > match.score2:
-            winners.append(match.athlete1)
-        else:
-            winners.append(match.athlete2)
-
-    # If there's only one winner, the tournament is over
+    # Check if this was the final round by seeing if there's only one winner left
     if len(winners) == 1:
-        messages.info(request, f"Turnamen telah selesai. Pemenangnya adalah {winners[0].user.nickname}!")
+        final_winner = winners[0]
+        messages.success(request, f"Turnamen telah selesai. Pemenangnya adalah {final_winner.user.nickname}!")
+        
+        # --- Mark the tournament as finished ---
+        tournament.is_finished = True
+        tournament.save(update_fields=['is_finished'])
+        return # Stop further processing
+
+    # If there are no winners yet but the round is complete (e.g. invalid data), do nothing
+    if not winners:
         return
 
     # Pair the winners for the next round
-    next_round = current_round + 1
+    next_round_number = current_round + 1
+    # Shuffle winners to randomize pairings in the next round
+    random.shuffle(winners)
     for i in range(0, len(winners), 2):
-        athlete1 = winners[i]
-        athlete2 = winners[i + 1]
-        Match.objects.create(
-            tournament=tournament,
-            athlete1=athlete1,
-            athlete2=athlete2,
-            score1=0,
-            score2=0,
-            round=next_round
-        )
-
-    messages.info(request, f"Pertandingan ronde {next_round} sudah dibuat.")
+        # Ensure there's a pair to create a match
+        if i + 1 < len(winners):
+            athlete1 = winners[i]
+            athlete2 = winners[i + 1]
+            Match.objects.create(
+                tournament=tournament,
+                athlete1=athlete1,
+                athlete2=athlete2,
+                round=next_round_number
+            )
+    messages.info(request, f"Pertandingan ronde {next_round_number} sudah dibuat.")
 
 # Func buat nentuin final round
 def get_final_round(player_limit):

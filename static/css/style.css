@@ -149,3 +149,27 @@ label[for="profile_image"]:hover {
         height: 35px;
     }
 }
+
+/* == Mobile First Default (for screens smaller than 576px) == */
+.desktop-table-view {
+    display: none !important;  /* Hide desktop table on mobile by default */
+}
+.mobile-table-view {
+    display: block !important; /* Show mobile table on mobile by default */
+}
+
+/* == Styles for tablet and desktop screens (576px and wider) == */
+@media (min-width: 768px) {
+    .desktop-table-view {
+        display: block !important; /* Show the desktop table */
+    }
+    .mobile-table-view {
+        display: none !important;  /* Hide the mobile table */
+    }
+}
+
+/* Make table rows with this class clickable */
+.clickable-row:hover {
+  cursor: pointer;
+  background-color: #f0f0f0; /* Optional: adds a subtle background color on hover */
+}

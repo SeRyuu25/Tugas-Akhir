@@ -11,26 +11,48 @@
       <h3>Turnamen Mendatang</h3>
       <ul class="list-group">
         {% for tournament in tournaments %}
-          <li class="list-group-item">
-            <strong>{{ tournament.name }}</strong><br>
-            Tanggal Mulai: {{ tournament.start_date }}
-          </li>
+          <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
+            <h5 class="mb-1">{{ tournament.name }}</h5>
+            <p class="mb-1">Tanggal Mulai: {{ tournament.start_date }}</p>
+          </a>
         {% empty %}
           <li class="list-group-item">Belum ada turnamen yang mendatang.</li>
         {% endfor %}
       </ul>
     </div>
+
     <div class="col-md-6">
       <h3>Atlet Teratas</h3>
-      <ul class="list-group">
-        {% for athlete in top_athletes %}
-          <li class="list-group-item">
-            {{ athlete.user.nickname }} - Rating: {{ athlete.current_rating }}
-          </li>
-        {% empty %}
-          <li class="list-group-item">Belum ada data atlet.</li>
-        {% endfor %}
-      </ul>
+      <table class="table table-striped table-hover table-bordered">
+        <thead class="text-center">
+          <tr>
+            <th class="text-center">Peringkat</th>
+            <th class="text-start">Atlet</th>
+            <th class="text-center">Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {# The loop now iterates over 'top_athletes' #}
+          {% for athlete in top_athletes %}
+            {# The row is clickable, just like on the ranking page #}
+            <tr class="clickable-row" onclick="window.location.href='{% url 'public_profile' athlete.id %}';">
+              
+              <td class="text-center align-middle fw-bold">{{ forloop.counter }}</td>
+      
+              <td class="align-middle">
+                <img src="{% if athlete.user.profile_image %}{{ athlete.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle me-2" style="width:30px; height:30px; object-fit:cover;" alt="Profile Picture">
+                {{ athlete.user.nickname }}
+              </td>
+      
+              <td class="text-center align-middle">{{ athlete.current_rating }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="text-center">Belum ada data atlet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

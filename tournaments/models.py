@@ -27,10 +27,45 @@ class Match(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
     athlete1   = models.ForeignKey(AthleteProfile, on_delete=models.CASCADE, related_name='matches_as_athlete1')
     athlete2   = models.ForeignKey(AthleteProfile, on_delete=models.CASCADE, related_name='matches_as_athlete2')
-    score1     = models.IntegerField()
-    score2     = models.IntegerField()
+    set1_p1 = models.PositiveIntegerField(null=True, blank=True)
+    set1_p2 = models.PositiveIntegerField(null=True, blank=True)
+    set2_p1 = models.PositiveIntegerField(null=True, blank=True)
+    set2_p2 = models.PositiveIntegerField(null=True, blank=True)
+    set3_p1 = models.PositiveIntegerField(null=True, blank=True)
+    set3_p2 = models.PositiveIntegerField(null=True, blank=True)
+    set4_p1 = models.PositiveIntegerField(null=True, blank=True)
+    set4_p2 = models.PositiveIntegerField(null=True, blank=True)
+    set5_p1 = models.PositiveIntegerField(null=True, blank=True)
+    set5_p2 = models.PositiveIntegerField(null=True, blank=True)
     round      = models.IntegerField(default=1)  # Buat ronde turnamen (1 = first round, 2 = quarterfinals, etc.)
     match_date = models.DateTimeField(auto_now_add=True)
+
+    # Hitung total set yg dimenangkan pemain (untuk tiebreaker)
+    def total_sets_won(self, athlete):
+        win_count = 0
+        for p1, p2 in [(self.set1_p1, self.set1_p2),
+                     (self.set2_p1, self.set2_p2),
+                     (self.set3_p1, self.set3_p2),
+                     (self.set4_p1, self.set4_p2),
+                     (self.set5_p1, self.set5_p2)]:
+            if p1 is None or p2 is None:
+                continue
+            p1_wins_set = (p1 >= 11 and p1 >= p2 + 2)
+            p2_wins_set = (p2 >= 11 and p2 >= p1 + 2)
+
+            if athlete == self.athlete1 and p1_wins_set:
+                win_count += 1
+            elif athlete == self.athlete2 and p2_wins_set:
+                win_count += 1
+        return win_count
+
+        # Buat return pemain yg menang 3 set duluan
+    def winner(self):
+        if self.total_sets_won(self.athlete1) >= 3:
+            return self.athlete1
+        if self.total_sets_won(self.athlete2) >= 3:
+            return self.athlete2
+        return None
 
     def __str__(self):
         return f"Ronde {self.round}: {self.athlete1.user.nickname} ({self.athlete1.user.username}) vs {self.athlete2.user.nickname} ({self.athlete2.user.username})"
