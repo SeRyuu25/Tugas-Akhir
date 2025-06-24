@@ -20,29 +20,40 @@ def home(request):
 # View buat ngasih liat ranking atlet
 # Buat sementara di sini, nanti bisa dipindah kalo butuh
 def athlete_ranking(request):
-    # Get the search query from the URL's GET parameters (e.g., /?q=Ryu)
     search_query = request.GET.get('q', '')
 
-    # Start with the base queryset of all finalized athletes
+    # First, get the complete ranked list of ALL finalized athlete IDs.
+    # This list establishes the "true" rank.
+    all_ranked_ids = list(AthleteProfile.objects.filter(
+        initial_rating_finalized=True
+    ).order_by('-current_rating').values_list('id', flat=True))
+
+    # Start with the base queryset for filtering
     athlete_list = AthleteProfile.objects.filter(initial_rating_finalized=True)
 
-    # If a search query exists, filter the queryset by nickname
     if search_query:
         athlete_list = athlete_list.filter(
             Q(user__nickname__icontains=search_query)
         )
-
-    # Order the final list by rating, from highest to lowest
+    
+    # Order the filtered list
     athlete_list = athlete_list.order_by('-current_rating')
 
-    # Set up the Paginator
-    paginator = Paginator(athlete_list, 10) # Show 10 athletes per page
+    # Paginate the filtered list
+    paginator = Paginator(athlete_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Prepare the context to pass to the template
+    # Now, add the true rank to each athlete on the CURRENT page
+    for athlete in page_obj:
+        try:
+            # Find the athlete's index in the full ranked list and add 1
+            athlete.true_rank = all_ranked_ids.index(athlete.id) + 1
+        except ValueError:
+            athlete.true_rank = "N/A"
+
     context = {
-        'page_obj': page_obj,          # The paginated object containing athletes for the current page
-        'search_query': search_query,  # The current search query to display in the search box
+        'page_obj': page_obj,
+        'search_query': search_query,
     }
     return render(request, 'dashboard/athlete_ranking.html', context)

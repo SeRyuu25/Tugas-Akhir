@@ -3,29 +3,41 @@
 
 {% block content %}
 <div class="container my-4">
-  <div class="card">
-    <div class="card-body text-center text-md-start">
-      {% if athlete.user.profile_image %}
-        <img 
-          src="{{ athlete.user.profile_image.url }}" 
-          alt="Profile Image" 
-          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
-          style="width:150px; height:150px; object-fit:cover;"
-        >
-      {% else %}
-        <img 
-          src="{% static 'images/default_profile.jpg' %}" 
-          alt="Default Profile" 
-          class="rounded-circle d-block mx-auto mx-md-0 mb-3"
-          style="width:150px; height:150px; object-fit:cover;"
-        >
-      {% endif %}
-      <p><strong>Nama Panggilan    :</strong> {{ athlete.user.nickname }}</p>
-      <p><strong>Nama Lengkap      :</strong> {{ athlete.user.real_name }}</p>
-      <p><strong>Nama PTM          :</strong> {{ athlete.user.ptm }}</p>
-      {% if not user.athlete_profile.initial_rating_finalized %}
-        <p><strong>Divisi Sebelumnya :</strong> {{ athlete.previous_divisi }}</p>
-      {% endif %}
+  <h2>Profil Atlet</h2>
+  <div class="card mt-3">
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+          {% if athlete.user.profile_image %}
+            <img 
+              src="{{ athlete.user.profile_image.url }}" 
+              alt="Profile Image" 
+              class="rounded-circle d-block mx-auto mb-3 mb-md-0"
+              style="width:150px; height:150px; object-fit:cover;"
+            >
+          {% else %}
+            <img 
+              src="{% static 'images/default_profile.jpg' %}" 
+              alt="Default Profile" 
+              class="rounded-circle d-block mx-auto mb-3 mb-md-0"
+              style="width:150px; height:150px; object-fit:cover;"
+            >
+          {% endif %}
+        </div>
+        <div class="col-md-9">
+            <p class="mb-1"><strong>Nama Panggilan:</strong> {{ athlete.user.nickname }}</p>
+            <p class="mb-1"><strong>Nama Lengkap:</strong> {{ athlete.user.real_name }}</p>
+            <p class="mb-1"><strong>Nama PTM:</strong> {{ athlete.user.ptm }}</p>
+            
+            {% if athlete.initial_rating_finalized %}
+              <p class="mb-1"><strong>Peringkat Saat Ini:</strong> #{{ rank }}</p>
+              <p class="mb-1"><strong>Rating Saat Ini:</strong> {{ athlete.current_rating }}</p>
+            {% else %}
+              <p class="mb-1"><strong>Rating Saat Ini:</strong> Menunggu finalisasi rating awal.</p>
+              <p class="mb-1"><strong>Divisi Sebelumnya:</strong> {{ athlete.previous_divisi }}</p>
+            {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 </div>

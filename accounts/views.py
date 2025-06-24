@@ -206,8 +206,30 @@ def profile(request):
 
 # Buat Profile yang bisa diliat publik
 def public_profile(request, athlete_id):
+    # Get the specific athlete's profile
     athlete = get_object_or_404(AthleteProfile, id=athlete_id)
-    return render(request, 'accounts/public_profile.html', {'athlete': athlete})
+    
+    # Calculate the athlete's rank
+    rank = 0
+    if athlete.initial_rating_finalized:
+        # Get all finalized athletes, ordered by rating
+        all_athletes_ranked = AthleteProfile.objects.filter(
+            initial_rating_finalized=True
+        ).order_by('-current_rating').values_list('id', flat=True)
+        
+        # Find the index (position) of the current athlete in the ranked list
+        try:
+            # The rank is the index in the list + 1
+            rank = list(all_athletes_ranked).index(athlete.id) + 1
+        except ValueError:
+            # This case handles if the athlete is somehow not in the ranked list, though they should be.
+            rank = "N/A"
+
+    context = {
+        'athlete': athlete,
+        'rank': rank, # Pass the rank to the template
+    }
+    return render(request, 'accounts/public_profile.html', context)
 
 # Buat update profile akun
 class CustomAccountUpdateView(LoginRequiredMixin, UpdateView):
