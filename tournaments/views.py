@@ -2,11 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import TournamentForm, MatchForm
-from .models import Tournament, Match
+from .models import Tournament, Match, TournamentPool
 from accounts.models import AthleteProfile
 from ratings.models import RatingHistory
 from ratings.elo import process_match
 import random
+import itertools
 
 # Create your views here.
 
@@ -44,15 +45,37 @@ def create_tournament(request):
 # View buat liat detail turnament
 def tournament_detail(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
-    # Buat pengelompokan pertandingan berdasarkan ronde / round (e.g., create a dictionary {round_number: [match, ...]})
+
+    # Buat pengelompokan pertandingan (rounds buat Gugur / Knockout, pools buat Pools) - bentuknya dictionary
     rounds = {}
-    for match in tournament.matches.all().order_by('round'):
-        rounds.setdefault(match.round, []).append(match)
-    first_round_exists = tournament.matches.filter(round=1).exists()
+    pools_with_matches = []
+    pool_winners = []
+
+    if tournament.tournament_type == 'knockout':
+        for match in tournament.matches.all().order_by('round', 'id'):
+            rounds.setdefault(match.round, []).append(match)
+    
+    elif tournament.tournament_type == 'pool':
+        all_pools = tournament.pools.all().order_by('name')
+
+        for pool in all_pools:
+            matches_in_pool = pool.matches.all().order_by('id')
+            pools_with_matches.append({'pool': pool, 'matches': matches_in_pool})
+
+        if tournament.is_finished:
+            for pool in all_pools:
+                winner = get_pool_winner(pool)
+                if winner:
+                    pool_winners.append({'pool': pool, 'winner': winner})
+            
+    first_round_exists = tournament.matches.filter(round=1).exists() or tournament.matches.filter(pool__isnull=False).exists()
+    
     return render(request, 'tournaments/tournament_detail.html', {
         'tournament': tournament,
         'rounds': rounds,
-        'first_round_exists': first_round_exists
+        'pools_with_matches': pools_with_matches,
+        'first_round_exists': first_round_exists,
+        'pool_winners': pool_winners,
     })
 
 # View kalo ada atlet yang daftar ke suatu upcoming turney
@@ -82,7 +105,6 @@ def register_for_tournament(request, tournament_id):
 
     return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
-
 @login_required
 @user_passes_test(is_ip_or_admin)
 def start_tournament(request, tournament_id):
@@ -101,11 +123,19 @@ def start_tournament(request, tournament_id):
         return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
     
     # Generate first round matches
-    result_message = create_first_round_matches(tournament)
-    messages.success(request, result_message)
+    if tournament.tournament_type == 'knockout':
+        result_message = create_first_round_matches(tournament)
+        messages.success(request, result_message)
+    elif tournament.tournament_type == 'pool':
+        result_message = create_pools_and_matches(tournament)
+        messages.success(request, result_message)
+    else:
+        # Fallback buat jaga-jaga
+        messages.error(request, "Tipe turnamen tidak diketahui.")
+
     return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
 
-# Func buat automate bikin first round match (pairingnya) --> sementara pairing masih random
+# Func buat automate bikin first round match untuk sistem Gugur / Knockout (pairingnya) --> sementara pairing masih random
 def create_first_round_matches(tournament):
     # Check if there are enough participants
     if tournament.participants.count() < tournament.player_limit:
@@ -129,6 +159,39 @@ def create_first_round_matches(tournament):
             round=1
         )
     return "Pertandingan babak pertama berhasil dibuat."
+
+# Fungsi buat bantu bikin pool di tournament
+def create_pools_and_matches(tournament):
+    participants = list(tournament.participants.all())
+    random.shuffle(participants)
+
+    players_per_pool = 3 # As we decided
+    num_pools = tournament.player_limit // players_per_pool
+
+    for i in range(num_pools):
+        pool_name = f"Pool {i + 1}"
+        # Create the pool object
+        pool = TournamentPool.objects.create(tournament=tournament, name=pool_name)
+        
+        # Get the slice of players for this pool
+        start_index = i * players_per_pool
+        end_index = start_index + players_per_pool
+        pool_participants = participants[start_index:end_index]
+        
+        # Add participants to the pool's ManyToManyField
+        pool.participants.add(*pool_participants)
+
+        # Generate round-robin matches for this pool
+        for athlete1, athlete2 in itertools.combinations(pool_participants, 2):
+            Match.objects.create(
+                tournament=tournament,
+                pool=pool, # Link the match to the pool
+                athlete1=athlete1,
+                athlete2=athlete2,
+                # 'round' field is left null for pool matches
+            )
+    
+    return f"{num_pools} pool berhasil dibuat dengan pertandingan round-robin."
 
 # View buat nyatet pertandingan & pergantian rating
 @login_required
@@ -198,12 +261,17 @@ def record_match(request, tournament_id, match_id):
                 )
 
             # After saving the match, check if this completes the round
-            current_round_number = match.round
-            if is_round_complete(tournament, current_round_number):
-                # If the round is complete, this message will be added...
-                messages.info(request, f"Semua pertandingan di ronde {current_round_number} telah selesai.")
-                # ...and then this function will try to generate the next round.
-                generate_next_round(tournament, current_round_number, request)
+            if match.pool:
+                if is_pool_complete(match.pool):
+                    messages.info(request, f"Semua pertandingan di {match.pool.name} telah selesai.")
+                    if are_all_pools_finished(tournament):
+                        tournament.is_finished = True
+                        tournament.save(update_fields=['is_finished'])
+                        messages.success(request, f"Turnamen '{tournament.name}' telah selesai!")
+            elif match.round:
+                if is_round_complete(tournament, match.round):
+                    messages.info(request, f"Semua pertandingan di Ronde {match.round} telah selesai.")
+                    generate_next_round(tournament, match.round, request)
 
             messages.success(request, "Hasil pertandingan berhasil disimpan.")
             return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
@@ -227,6 +295,83 @@ def is_round_complete(tournament, round_number):
     """
     matches = tournament.matches.filter(round=round_number)
     return all(match.winner() is not None for match in matches)
+
+# Fungsi buat cek apakah semua pertandingan di 1 pool sudah beres ato blom
+def is_pool_complete(pool):
+    """Checks if all matches in a given pool have a winner."""
+    # A pool is complete if the number of matches equals the number of matches with a winner.
+    return pool.matches.count() > 0 and pool.matches.count() == len([m for m in pool.matches.all() if m.winner() is not None])
+
+# Fungsi buat nentuin yg menang di 1 pool
+def get_pool_winner(pool):
+    """
+    Determines the winner of a completed 3-person pool using a multi-step tie-breaker.
+    1. Most Match Wins -> 2. Set Ratio -> 3. Point Ratio
+    """
+    if not is_pool_complete(pool):
+        return None
+
+    participants = list(pool.participants.all())
+    matches_in_pool = pool.matches.all()
+
+    # Kriteria 1 : Paling banyak menang di 1 pool itu
+    win_counts = {p: 0 for p in participants}
+    for match in matches_in_pool:
+        winner = match.winner()
+        if winner:
+            win_counts[winner] += 1
+    
+    max_wins = max(win_counts.values()) if win_counts else 0
+    tied_players = [p for p, w in win_counts.items() if w == max_wins]
+
+    if len(tied_players) == 1:
+        return tied_players[0]
+    
+    # Kriteria 2 : Perbandingan set menang / kalah (selisih set)
+    set_ratios = {}
+    for player in tied_players:
+        sets_won = sum(match.total_sets_won(player) for match in matches_in_pool)
+        sets_lost = sum(
+            match.total_sets_won(match.athlete1 if player == match.athlete2 else match.athlete2) 
+            for match in matches_in_pool
+        )
+        set_ratios[player] = sets_won / sets_lost if sets_lost > 0 else float('inf')
+
+    max_set_ratio = max(set_ratios.values())
+    set_ratio_winners = [p for p, r in set_ratios.items() if r == max_set_ratio]
+
+    if len(set_ratio_winners) == 1:
+        return set_ratio_winners[0]
+
+    # Kriteria 3 : Perbandingan skor poin menang / kalah (selisih skor poin)
+    point_ratios = {}
+    for player in set_ratio_winners:
+        points_won = sum(match.get_points_for_athlete(player) for match in matches_in_pool)
+        points_lost = sum(
+            match.get_points_for_athlete(match.athlete1 if player == match.athlete2 else match.athlete2) 
+            for match in matches_in_pool
+        )
+        point_ratios[player] = points_won / points_lost if points_lost > 0 else float('inf')
+
+    max_point_ratio = max(point_ratios.values())
+    point_ratio_winners = [p for p, r in point_ratios.items() if r == max_point_ratio]
+
+    if point_ratio_winners:
+        # Ini untuk final sementara
+        # Kalau msh 2+ pemain yg tied, dianggap yg pertama (di list) yang menang
+        return point_ratio_winners[0]
+
+    # Fallback buat jaga-jaga error
+    return tied_players[0] if tied_players else None
+
+# Fungsi buat cek apakah di pool turnament, semua pool udh beres ato blom
+def are_all_pools_finished(tournament):
+    """Checks if every pool in the tournament is complete."""
+    # Ensure there are pools to check
+    if not tournament.pools.exists():
+        return False
+    # Return True only if every single pool is complete
+    return all(is_pool_complete(pool) for pool in tournament.pools.all())
 
 # Func buat generate ronde selanjutnya kalo 1 ronde udh beres
 def generate_next_round(tournament, current_round, request):

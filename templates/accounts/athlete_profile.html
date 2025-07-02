@@ -89,7 +89,7 @@
                   <tr data-bs-toggle="collapse" data-bs-target="#match-details-{{ match.id }}" aria-expanded="false" aria-controls="match-details-{{ match.id }}" style="cursor: pointer;">
                     <td class="align-middle text-start">
                       {{ match.tournament.name }}<br>
-                      <small class="text-muted">Ronde: {% get_round_label match.round match.tournament.player_limit %}</small>
+                      <small class="text-muted">Ronde : {{ match.context_label }}</small>
                     </td>
                     <td class="text-center align-middle">
                       {% if winner %}{% if winner == athlete_profile %}<span class="badge bg-success">Menang</span>{% else %}<span class="badge bg-danger">Kalah</span>{% endif %}{% else %}<span class="badge bg-secondary">Belum Selesai</span>{% endif %}
@@ -141,7 +141,7 @@
                   <tr data-bs-toggle="collapse" data-bs-target="#match-details-{{ match.id }}" aria-expanded="false" aria-controls="match-details-{{ match.id }}" style="cursor: pointer;">
                     <td class="align-middle text-start">
                       {{ match.tournament.name }}<br>
-                      <small class="text-muted">Ronde: {% get_round_label match.round match.tournament.player_limit %}</small>
+                      <small class="text-muted">Ronde : {{ match.context_label }}</small>
                     </td>
                     <td class="text-center align-middle">
                       {% if winner %}{% if winner == athlete_profile %}<span class="badge bg-success">Menang</span>{% else %}<span class="badge bg-danger">Kalah</span>{% endif %}{% else %}<span class="badge bg-secondary">Belum Selesai</span>{% endif %}
@@ -195,6 +195,31 @@
         </tbody>
       </table>
     </div>
+    {% if matches.has_other_pages %}  <!-- Buat pagination -->
+      <nav aria-label="Navigasi Pertandingan">
+        <ul class="pagination justify-content-end">
+          {% if matches.has_previous %}
+            <li class="page-item"><a class="page-link" href="?match_page={{ matches.previous_page_number }}">Sebelumnya</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>
+          {% endif %}
+
+          {% for num in matches.paginator.page_range %}
+            {% if matches.number == num %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+              <li class="page-item"><a class="page-link" href="?match_page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if matches.has_next %}
+            <li class="page-item"><a class="page-link" href="?match_page={{ matches.next_page_number }}">Berikutnya</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Berikutnya</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
   </div>
 
 </div>

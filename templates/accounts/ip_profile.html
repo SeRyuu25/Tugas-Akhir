@@ -38,34 +38,46 @@
     <h3>Turnamen yang Anda Buat</h3>
     <ul class="list-group">
       {% for tournament in tournaments_hosted %}
-        <li class="list-group-item">
-          <a href="{% url 'tournaments:tournament_detail' tournament.id %}">
-            {{ tournament.name }}
-          </a>
-          - {{ tournament.start_date }}
-        </li>
+        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
+          {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+        </a>
       {% empty %}
         <li class="list-group-item">Belum ada turnamen yang Anda buat.</li>
       {% endfor %}
     </ul>
+    <!-- Buat paginator turnamen yg dibuat -->
+    {% if tournaments_hosted.has_other_pages %}
+      <nav class="mt-3"><ul class="pagination justify-content-end">
+        {% if tournaments_hosted.has_previous %}<li class="page-item"><a class="page-link" href="?hosted_page={{ tournaments_hosted.previous_page_number }}">Sebelumnya</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>{% endif %}
+        {% for num in tournaments_hosted.paginator.page_range %}{% if tournaments_hosted.number == num %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?hosted_page={{ num }}">{{ num }}</a></li>{% endif %}{% endfor %}
+        {% if tournaments_hosted.has_next %}<li class="page-item"><a class="page-link" href="?hosted_page={{ tournaments_hosted.next_page_number }}">Berikutnya</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Berikutnya</span></li>{% endif %}
+      </ul></nav>
+    {% endif %}
   </div>
 
   <div class="mb-4">
     <h3>Daftar Atlet yang Belum Punya Rating Awal</h3>
     <ul class="list-group">
       {% for athlete in pending_athletes %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span>
-            <a href="{% url 'public_profile' athlete.id %}">
-              {{ athlete.user.nickname }}
-            </a>
-          </span>
-          <a href="{% url 'rate_athlete' athlete.id %}" class="btn btn-sm btn-primary">Beri Rating Awal</a>
-        </li>
+        <a href="{% url 'rate_athlete' athlete.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <div>
+            <img src="{% if athlete.user.profile_image %}{{ athlete.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle me-2" style="width:30px; height:30px; object-fit:cover;" alt="Profile Picture">
+            <span class="fw-bold">{{ athlete.user.nickname }}</span>
+          </div>
+          <span class="badge bg-primary rounded-pill">Beri Rating Awal &rarr;</span>
+        </a>
       {% empty %}
         <li class="list-group-item">Tidak ada atlet yang belum punya rating awal.</li>
       {% endfor %}
     </ul>
+    <!-- Buat paginator list pemberian rating awal atlet -->
+    {% if pending_athletes.has_other_pages %}
+      <nav class="mt-3"><ul class="pagination justify-content-end">
+        {% if pending_athletes.has_previous %}<li class="page-item"><a class="page-link" href="?pending_page={{ pending_athletes.previous_page_number }}">Sebelumnya</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>{% endif %}
+        {% for num in pending_athletes.paginator.page_range %}{% if pending_athletes.number == num %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?pending_page={{ num }}">{{ num }}</a></li>{% endif %}{% endfor %}
+        {% if pending_athletes.has_next %}<li class="page-item"><a class="page-link" href="?pending_page={{ pending_athletes.next_page_number }}">Berikutnya</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Berikutnya</span></li>{% endif %}
+      </ul></nav>
+    {% endif %}
   </div>
 
   {% comment %}

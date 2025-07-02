@@ -22,10 +22,41 @@
     {% endif %}
   {% endif %}
 
-  {% if tournament.matches.exists %}
+  {# Display a list of Pool Winners if the tournament is a finished pool tournament #}
+  {% if tournament.is_finished and tournament.tournament_type == 'pool' %}
+    <div class="text-center my-4">
+      <h1 class="display-5 text-warning">PEMENANG POOL</h1>
+      <div class="row justify-content-center g-3 mt-2">
+        {% for item in pool_winners %}
+          <div class="col-md-4 col-sm-6">
+            <div class="winner-card p-3 bg-light rounded shadow-sm">
+              <h4 class="text-muted">{{ item.pool.name }}</h4>
+              {% if item.winner.user.profile_image %}
+                <img
+                  src="{{ item.winner.user.profile_image.url }}"
+                  class="rounded-circle my-2"
+                  style="width:80px; height:80px; object-fit:cover;"
+                  alt="{{ item.winner.user.nickname }}"
+                >
+              {% else %}
+                <img
+                  src="{% static 'images/default_profile.jpg' %}"
+                  class="rounded-circle my-2"
+                  style="width:80px; height:80px; object-fit:cover;"
+                  alt="Default profile"
+                >
+              {% endif %}
+              <h3 class="fw-bold">{{ item.winner.user.nickname }}</h3>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {# Display a single champion if the tournament is a finished knockout tournament #}
+  {% elif tournament.is_finished and tournament.tournament_type == 'knockout' %}
     {% with final_match=tournament.matches.last %}
-      {% if final_match.round == tournament.player_limit|get_final_round and final_match.winner %}
-        <div class="text-center mb-4">
+      {% if final_match.winner %}
+        <div class="text-center my-4">
           <h1 class="display-4 text-warning">JUARA 1</h1>
           <div class="winner-card p-3 bg-light rounded shadow-sm">
             {% if final_match.winner.user.profile_image %}
@@ -79,161 +110,98 @@
     {% endfor %}
   </div>
 
-  {# Bracket Rounds #}
-  {% for round_number, matches in rounds.items %}
-    <div class="mb-4">
-      <h4>{% get_round_label round_number tournament.player_limit %}</h4>
-      <div class="row">
-        {% for match in matches %}
-          <div class="col-md-6 mb-3">
-            <div class="card p-3">
-              {% if not match.winner %}
-                <div class="d-flex align-items-center justify-content-center">
-                  <div class="me-3 text-center">
-                    {% if match.athlete1.user.profile_image %}
-                      <img
-                        src="{{ match.athlete1.user.profile_image.url }}"
-                        class="rounded-circle mb-1"
-                        style="width:40px; height:40px;"
-                        alt="{{ match.athlete1.user.nickname }}"
-                      >
-                    {% else %}
-                      <img
-                        src="{% static 'images/default_profile.jpg' %}"
-                        class="rounded-circle mb-1"
-                        style="width:40px; height:40px;"
-                        alt="Default profile"
-                      >
+  <!-- Daftar Pertandingan -->
+  {% if tournament.matches.exists %}
+  
+    {# Check the tournament type to decide which layout to show #}
+    {% if tournament.tournament_type == 'pool' %}
+
+      {# --- POOL TOURNAMENT DISPLAY --- #}
+      <h3 class="mt-4">Babak Pool</h3>
+      {% for item in pools_with_matches %}
+        <div class="mb-4">
+          <h4>{{ item.pool.name }}</h4>
+          
+          <p><strong>Peserta Pool:</strong> 
+            {% for participant in item.pool.participants.all %}
+              {{ participant.user.nickname }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+
+          {# Display matches for this pool #}
+          <div class="row">
+            {% for match in item.matches %}
+              <div class="col-lg-6 mb-3">
+                <div class="card p-3">
+                  {% if not match.winner %}
+                    {# Display for an UNFINISHED match #}
+                    <div class="d-flex align-items-center justify-content-center">
+                      <div class="text-center">
+                        <img src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete1.user.nickname }}">
+                        <div>{{ match.athlete1.user.nickname }}</div>
+                      </div>
+                      <div class="fw-bold mx-3">vs</div>
+                      <div class="text-center">
+                        <img src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete2.user.nickname }}">
+                        <div>{{ match.athlete2.user.nickname }}</div>
+                      </div>
+                    </div>
+                    {% if user == tournament.host or user.is_superuser %}
+                      <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
                     {% endif %}
-                    <div>{{ match.athlete1.user.nickname }}</div>
-                  </div>
-                  <div class="fw-bold mx-2 align-self-center">vs</div>
-                  <div class="ms-3 text-center">
-                    {% if match.athlete2.user.profile_image %}
-                      <img
-                        src="{{ match.athlete2.user.profile_image.url }}"
-                        class="rounded-circle mb-1"
-                        style="width:40px; height:40px;"
-                        alt="{{ match.athlete2.user.nickname }}"
-                      >
-                    {% else %}
-                      <img
-                        src="{% static 'images/default_profile.jpg' %}"
-                        class="rounded-circle mb-1"
-                        style="width:40px; height:40px;"
-                        alt="Default profile"
-                      >
-                    {% endif %}
-                    <div>{{ match.athlete2.user.nickname }}</div>
-                  </div>
+                  {% else %}
+                    {# Display for a FINISHED match using the partial template #}
+                    {% include "tournaments/partials/match_result_table.html" with match=match %}
+                  {% endif %}
                 </div>
-                {% if user == tournament.host %}
-                  <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
-                {% endif %}
-              {% else %}
-                <div class="table-responsive">
-                  <table class="table table-sm mb-0">
-                    <thead>
-                      <tr>
-                        <th class="text-start" style="width: 40%;">Pemain</th>
-                        <th class="text-center">Set</th>
-                        <th class="text-center">1</th>
-                        <th class="text-center">2</th>
-                        <th class="text-center">3</th>
-                        <th class="text-center">4</th>
-                        <th class="text-center">5</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% with winner=match.winner loser=match|get_loser %}
-                        {# Check if we have a winner and loser before proceeding #}
-                        {% if winner and loser %}
-                          {% with winner_rh=match|get_rating:winner loser_rh=match|get_rating:loser %}
-                            
-                            <tr>
-                              <td class="text-start">
-                                <img src="{% if winner.user.profile_image %}{{ winner.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle me-1" style="width:30px; height:30px; object-fit:cover;" alt="Pemenang">
-                                <strong class="text-success align-middle">{{ winner.user.nickname }}</strong>
-                                
-                                {# --- RATING CHANGE FOR WINNER --- #}
-                                {% if winner_rh %}
-                                  <br>
-                                  <span class="rating-change">{{ winner_rh.rating_before }} → {{ winner_rh.rating_after }}
-                                    <span class="fw-bold {% if winner_rh.rating_change > 0 %}text-success{% elif winner_rh.rating_change == 0 %}text-primary{% else %}text-danger{% endif %}">
-                                      ({% if winner_rh.rating_change > 0 %}+{% endif %}{{ winner_rh.rating_change }})
-                                    </span>
-                                  </span>
-                                {% endif %}
-                              </td>
-
-                              <td class="text-center align-middle"><strong class="text-success fs-5">{{ match|sets_won:winner }}</strong></td>
-
-                              {# --- Score display logic remains the same --- #}
-                              {% for i in "12345" %}
-                                {% with p1_score_attr_name="set"|add:i|add:"_p1" p2_score_attr_name="set"|add:i|add:"_p2" %}
-                                  {% with p1_score=match|get_attr:p1_score_attr_name p2_score=match|get_attr:p2_score_attr_name %}
-                                    {% if winner == match.athlete1 %}
-                                      <td class="text-center align-middle">
-                                        {% if p1_score is not None %}{% if p1_score > p2_score %}<strong>{{ p1_score }}</strong>{% else %}{{ p1_score }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
-                                      </td>
-                                    {% else %}
-                                      <td class="text-center align-middle">
-                                        {% if p2_score is not None %}{% if p2_score > p1_score %}<strong>{{ p2_score }}</strong>{% else %}{{ p2_score }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
-                                      </td>
-                                    {% endif %}
-                                  {% endwith %}
-                                {% endwith %}
-                              {% endfor %}
-                            </tr>
-
-                            <tr>
-                              <td class="text-start">
-                                <img src="{% if loser.user.profile_image %}{{ loser.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle me-1" style="width:30px; height:30px; object-fit:cover;" alt="Kalah">
-                                <span class="align-middle">{{ loser.user.nickname }}</span>
-                                
-                                {# --- RATING CHANGE FOR LOSER --- #}
-                                {% if loser_rh %}
-                                  <br>
-                                  <span class="rating-change">{{ loser_rh.rating_before }} → {{ loser_rh.rating_after }}
-                                    <span class="fw-bold {% if loser_rh.rating_change > 0 %}text-success{% elif loser_rh.rating_change == 0 %}text-primary{% else %}text-danger{% endif %}">
-                                      ({% if loser_rh.rating_change > 0 %}+{% endif %}{{ loser_rh.rating_change }})
-                                    </span>
-                                  </span>
-                                {% endif %}
-                              </td>
-
-                              <td class="text-center align-middle text-muted fs-5"><span>{{ match|sets_won:loser }}</span></td>
-
-                              {# --- Score display logic remains the same --- #}
-                              {% for i in "12345" %}
-                                {% with p1_score_attr_name="set"|add:i|add:"_p1" p2_score_attr_name="set"|add:i|add:"_p2" %}
-                                  {% with p1_score=match|get_attr:p1_score_attr_name p2_score=match|get_attr:p2_score_attr_name %}
-                                    {% if loser == match.athlete1 %}
-                                      <td class="text-center align-middle">
-                                        {% if p1_score is not None %}{% if p1_score > p2_score %}<strong>{{ p1_score }}</strong>{% else %}{{ p1_score }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
-                                      </td>
-                                    {% else %}
-                                      <td class="text-center align-middle">
-                                        {% if p2_score is not None %}{% if p2_score > p1_score %}<strong>{{ p2_score }}</strong>{% else %}{{ p2_score }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
-                                      </td>
-                                    {% endif %}
-                                  {% endwith %}
-                                {% endwith %}
-                              {% endfor %}
-                            </tr>
-
-                          {% endwith %}
-                        {% endif %}
-                      {% endwith %}
-                    </tbody>
-                  </table>
-                </div>
-              {% endif %}
-            </div>
+              </div>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
-    </div>
-  {% endfor %}
+        </div>
+      {% endfor %}
+      {# --- END POOL DISPLAY --- #}
+
+    {% else %}
+    
+      {# --- KNOCKOUT TOURNAMENT DISPLAY (Your existing layout) --- #}
+      <h3 class="mt-4">Babak Pertandingan</h3>
+      {% for round_number, matches in rounds.items %}
+        <div class="mb-4">
+          <h4>{% get_round_label round_number tournament.player_limit %}</h4>
+          <div class="row">
+            {% for match in matches %}
+              <div class="col-lg-6 mb-3">
+                <div class="card p-3">
+                  {% if not match.winner %}
+                    {# Display for an UNFINISHED match #}
+                    <div class="d-flex align-items-center justify-content-center">
+                      <div class="me-3 text-center">
+                        <img src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete1.user.nickname }}">
+                        <div>{{ match.athlete1.user.nickname }}</div>
+                      </div>
+                      <div class="fw-bold mx-2 align-self-center">vs</div>
+                      <div class="ms-3 text-center">
+                        <img src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete2.user.nickname }}">
+                        <div>{{ match.athlete2.user.nickname }}</div>
+                      </div>
+                    </div>
+                    {% if user == tournament.host or user.is_superuser %}
+                      <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
+                    {% endif %}
+                  {% else %}
+                    {# Display for a FINISHED match using the partial template #}
+                    {% include "tournaments/partials/match_result_table.html" with match=match %}
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      {# --- END KNOCKOUT DISPLAY --- #}
+
+    {% endif %}
+
+  {% endif %}
 </div>
 {% endblock %}

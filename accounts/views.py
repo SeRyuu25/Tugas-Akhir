@@ -6,6 +6,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.core.cache import cache
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q, Avg
@@ -171,6 +172,7 @@ def profile(request):
     if user.role == 'atlet':
         # For athlete accounts: show profile data, upcoming & finished tournaments, and match records.
         athlete_profile = user.athlete_profile
+
         upcoming_tournaments = Tournament.objects.filter(
             participants=athlete_profile,  # use the participants relation
             is_finished=False  # check is finished or not
@@ -179,24 +181,39 @@ def profile(request):
             participants=athlete_profile,
             is_finished=True
         ).order_by('-start_date')
-        matches = Match.objects.filter(
+
+        all_matches = Match.objects.filter(
             Q(athlete1=athlete_profile) | Q(athlete2=athlete_profile)
         ).order_by('-match_date')
+
+        match_paginator = Paginator(all_matches, 5) # 5 matches per page
+        match_page_number = request.GET.get('match_page')
+        matches_page_obj = match_paginator.get_page(match_page_number)
+        
         context = {
             'athlete_profile': athlete_profile,
             'upcoming_tournaments': upcoming_tournaments,
             'finished_tournaments': finished_tournaments,
-            'matches': matches,
+            'matches': matches_page_obj,
         }
         return render(request, 'accounts/athlete_profile.html', context)
     elif user.role == 'ip':
         # For IP accounts: show tournaments hosted by the IP, pending registered athletes, and manual opinions.
-        tournaments_hosted = Tournament.objects.filter(host=user)
-        pending_athletes = AthleteProfile.objects.filter(initial_rating_finalized=False).exclude(ip_opinions__ip_account=request.user)
+        all_tournaments_hosted = Tournament.objects.filter(host=user).order_by('-created_at')
+        all_pending_athletes = AthleteProfile.objects.filter(initial_rating_finalized=False).exclude(ip_opinions__ip_account=request.user).order_by('user__nickname')
         manual_opinions = IPRatingOpinion.objects.filter(ip_account=user, athlete__isnull=True)
+
+        hosted_paginator = Paginator(all_tournaments_hosted, 5) # 5 per page
+        hosted_page_number = request.GET.get('hosted_page')
+        hosted_page_obj = hosted_paginator.get_page(hosted_page_number)
+
+        pending_paginator = Paginator(all_pending_athletes, 5) # 5 per page
+        pending_page_number = request.GET.get('pending_page')
+        pending_page_obj = pending_paginator.get_page(pending_page_number)
+
         context = {
-            'tournaments_hosted': tournaments_hosted,
-            'pending_athletes': pending_athletes,
+            'tournaments_hosted': hosted_page_obj,
+            'pending_athletes': pending_page_obj,
             'manual_opinions': manual_opinions,
         }
         return render(request, 'accounts/ip_profile.html', context)

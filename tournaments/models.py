@@ -97,7 +97,7 @@ class Match(models.Model):
             return self.pool.name
         return "N/A" # Fallback
 
-    # Hitung total set yg dimenangkan pemain (untuk tiebreaker)
+    # Hitung total set yg dimenangkan pemain (untuk ngecek seorang pemain udah menang berapa)
     def total_sets_won(self, athlete):
         win_count = 0
         for p1, p2 in [(self.set1_p1, self.set1_p2),
@@ -116,13 +116,34 @@ class Match(models.Model):
                 win_count += 1
         return win_count
 
-        # Buat return pemain yg menang 3 set duluan
+    # Buat return pemain yg menang 3 set duluan
     def winner(self):
         if self.total_sets_won(self.athlete1) >= 3:
             return self.athlete1
         if self.total_sets_won(self.athlete2) >= 3:
             return self.athlete2
         return None
+
+    # Buat return jumlah skor yg didapat seorang pemain di 1 pertandingan
+    def get_points_for_athlete(self, athlete):
+        points_scored = 0
+        is_athlete1 = (athlete == self.athlete1)
+
+        all_sets = [
+            (self.set1_p1, self.set1_p2),
+            (self.set2_p1, self.set2_p2),
+            (self.set3_p1, self.set3_p2),
+            (self.set4_p1, self.set4_p2),
+            (self.set5_p1, self.set5_p2)
+        ]
+
+        for p1_score, p2_score in all_sets:
+            if p1_score is not None and p2_score is not None:
+                if is_athlete1:
+                    points_scored += p1_score
+                else:
+                    points_scored += p2_score
+        return points_scored
 
     def __str__(self):
         return f"{self.tournament.name} - {self.context_label}: {self.athlete1.user.nickname} vs {self.athlete2.user.nickname}"

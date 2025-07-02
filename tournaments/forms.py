@@ -7,15 +7,24 @@ from django.core.exceptions import ValidationError
 class TournamentForm(forms.ModelForm):
     class Meta:
         model   = Tournament
-        fields  = ['name', 'start_date', 'player_limit']  # Nanti bisa ditambah fieldnya klo kurang
+        fields  = ['name', 'start_date', 'tournament_type', 'player_limit']  # Nanti bisa ditambah fieldnya klo kurang
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'tournament_type': forms.Select(attrs={'class': 'form-select'}),
+            'player_limit': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'name': 'Nama Turnamen',
+            'start_date': 'Tanggal Mulai',
+            'tournament_type': 'Tipe Turnamen',
+            'player_limit': 'Batas Pemain',
         }
 
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
         if start_date and start_date < datetime.date.today():
-            raise ValidationError("The start date must be in the future.")
+            raise ValidationError("Tanggal Mulai harus di masa depan.")
         return start_date
 
 class MatchForm(forms.ModelForm):

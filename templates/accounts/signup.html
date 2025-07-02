@@ -11,37 +11,52 @@
     <div class="mb-3">
       <label for="{{ form.email.id_for_label }}" class="form-label">Email / Gmail</label>
       {{ form.email }}
-      {{ form.email.errors }}
+      {% if form.email.errors %}
+        <div class="text-danger">{{ form.email.errors }}</div>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="{{ form.password1.id_for_label }}" class="form-label">Kata Sandi</label>
       {{ form.password1 }}
-      {{ form.password1.errors }}
+      {% if form.password1.help_text %}
+        <div class="form-text mt-1">{{ form.password1.help_text|safe }}</div>
+      {% endif %}
+      {% if form.password1.errors %}
+        <div class="text-danger">{{ form.password1.errors }}</div>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="{{ form.password2.id_for_label }}" class="form-label">Konfirmasi Kata Sandi</label>
       {{ form.password2 }}
-      {{ form.password2.errors }}
+      {% if form.password2.errors %}
+        <div class="text-danger">{{ form.password2.errors }}</div>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="{{ form.nickname.id_for_label }}" class="form-label">Nama Panggilan</label>
       {{ form.nickname }}
-      {{ form.nickname.errors }}
+      {% if form.nickname.errors %}
+        <div class="text-danger">{{ form.nickname.errors }}</div>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="{{ form.real_name.id_for_label }}" class="form-label">Nama Lengkap</label>
       {{ form.real_name }}
-      {{ form.real_name.errors }}
+      {% if form.real_name.errors %}
+        <div class="text-danger">{{ form.real_name.errors }}</div>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="{{ form.profile_image.id_for_label }}" class="form-label">Foto Profil</label>
       {{ form.profile_image }}
-      {{ form.profile_image.errors }}
+      {% if form.profile_image.errors %}
+        <div class="text-danger">{{ form.profile_image.errors }}</div>
+      {% endif %}
     </div>
 
     <button type="submit" class="btn btn-primary">Daftar</button>

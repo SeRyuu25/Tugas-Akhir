@@ -1,36 +1,78 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="my-4">
+<div class="container my-4">
   <h2>Buat Turnamen Baru</h2>
+  <hr>
   <form method="post">
     {% csrf_token %}
-    <!-- Tournament Name -->
+    
     <div class="mb-3">
-      <label for="{{ form.name.id_for_label }}" class="form-label">Nama Turnamen</label>
+      <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
       {{ form.name }}
-      {% if form.name.errors %}
-        <div class="text-danger">{{ form.name.errors }}</div>
-      {% endif %}
+      {% if form.name.errors %}<div class="text-danger mt-1"><small>{{ form.name.errors.as_text }}</small></div>{% endif %}
     </div>
 
-    <!-- Start Date -->
     <div class="mb-3">
-      <label for="{{ form.start_date.id_for_label }}" class="form-label">Tanggal Mulai Turnamen</label>
+      <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }}</label>
       {{ form.start_date }}
-      {% if form.start_date.errors %}
-        <div class="text-danger">{{ form.start_date.errors }}</div>
-      {% endif %}
+      {% if form.start_date.errors %}<div class="text-danger mt-1"><small>{{ form.start_date.errors.as_text }}</small></div>{% endif %}
+    </div>
+    
+    <div class="mb-3">
+      <label for="{{ form.tournament_type.id_for_label }}" class="form-label">{{ form.tournament_type.label }}</label>
+      {{ form.tournament_type }}
+      {% if form.tournament_type.errors %}<div class="text-danger mt-1"><small>{{ form.tournament_type.errors.as_text }}</small></div>{% endif %}
     </div>
 
-    <!-- Player Limit -->
     <div class="mb-3">
-      <label for="{{ form.player_limit.id_for_label }}" class="form-label">Jumlah Maksimal Atlet</label>
+      <label for="{{ form.player_limit.id_for_label }}" class="form-label">{{ form.player_limit.label }}</label>
       {{ form.player_limit }}
-      {% if form.player_limit.errors %}
-        <div class="text-danger">{{ form.player_limit.errors }}</div>
-      {% endif %}
+      {% if form.player_limit.errors %}<div class="text-danger mt-1"><small>{{ form.player_limit.errors.as_text }}</small></div>{% endif %}
     </div>
+    
     <button type="submit" class="btn btn-primary">Konfirmasi</button>
   </form>
 </div>
+
+{# --- JAVASCRIPT FOR DYNAMIC DROPDOWNS --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const typeSelect = document.getElementById('{{ form.tournament_type.id_for_label }}');
+  const limitSelect = document.getElementById('{{ form.player_limit.id_for_label }}');
+  
+  // Store all possible options from the original player limit dropdown
+  const allOptions = Array.from(limitSelect.options);
+
+  const updateLimitOptions = () => {
+    const selectedType = typeSelect.value;
+    
+    // Remember the currently selected value, if any
+    const previouslySelectedValue = limitSelect.value;
+
+    // Clear current options
+    limitSelect.innerHTML = '';
+    
+    // Filter and add back the relevant options
+    allOptions.forEach(option => {
+      // The option text contains "(Sistem Gugur)" or "(Sistem Pool)"
+      if (selectedType === 'knockout' && option.text.includes('Gugur')) {
+        limitSelect.add(option);
+      } else if (selectedType === 'pool' && option.text.includes('Pool')) {
+        limitSelect.add(option);
+      }
+    });
+
+    // Try to re-select the previous value if it's still a valid option
+    if (limitSelect.querySelector(`option[value="${previouslySelectedValue}"]`)) {
+        limitSelect.value = previouslySelectedValue;
+    }
+  };
+
+  // Add event listener to the type dropdown
+  typeSelect.addEventListener('change', updateLimitOptions);
+  
+  // Run once on page load to set the initial correct options
+  updateLimitOptions();
+});
+</script>
 {% endblock %}

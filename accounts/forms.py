@@ -1,9 +1,10 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from .models import CustomUser, IPRatingOpinion, AthleteAccountReference
 from django.utils.crypto import get_random_string
+from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from allauth.account.forms import SignupForm, LoginForm
+from allauth.account.forms import SignupForm
 from allauth.account.models import EmailAddress
 
 # Utility buat ngecek username udh dipake ato belum (untuk registrasi akun)
@@ -31,6 +32,22 @@ class CustomSignupForm(SignupForm):
         required=False,
         widget=forms.ClearableFileInput(attrs={'class':'form-control'})
     )
+
+    def __init__(self, *args, **kwargs):
+        super(CustomSignupForm, self).__init__(*args, **kwargs)
+        # Add help text to the password fields from allauth's SignupForm
+        password_help_text = mark_safe(
+            "<ul class='list-unstyled text-muted small ms-3'>"
+            "<li>Kata sandi Anda harus mengandung setidaknya 8 karakter.</li>"
+            "<li>Tidak boleh sama dengan info pribadi Anda (nama, email, dll).</li>"
+            "<li>Tidak boleh kata sandi yang umum digunakan.</li>"
+            "<li>Tidak boleh hanya berisi angka.</li>"
+            "</ul>"
+        )
+        self.fields['password1'].help_text = password_help_text
+        # Ensure Bootstrap classes are applied
+        self.fields['password1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control'})
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -98,6 +115,19 @@ class IPAccountCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = ('nickname', 'real_name', 'email')
+        help_texts = {
+            'password2': 'Masukkan kata sandi yang sama seperti di atas, untuk verifikasi.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(IPAccountCreationForm, self).__init__(*args, **kwargs)
+        self.fields['password1'].help_text = mark_safe(
+            "<ul class='list-unstyled text-muted small ms-3'>"
+            "<li>Kata sandi harus mengandung setidaknya 8 karakter.</li>"
+            "<li>Tidak boleh kata sandi yang umum digunakan.</li>"
+            "<li>Tidak boleh hanya berisi angka.</li>"
+            "</ul>"
+        )
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -151,6 +181,24 @@ class CustomAccountUpdateForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError("Nama panggilan sudah dipakai.")
         return nick
+
+# Buat nambah help text di change password
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super(CustomPasswordChangeForm, self).__init__(*args, **kwargs)
+        # Add help text for the new password field
+        self.fields['new_password1'].help_text = mark_safe(
+            "<ul class='list-unstyled text-muted small ms-3'>"
+            "<li>Kata sandi Anda harus mengandung setidaknya 8 karakter.</li>"
+            "<li>Tidak boleh sama dengan info pribadi Anda.</li>"
+            "<li>Tidak boleh kata sandi yang umum digunakan.</li>"
+            "<li>Tidak boleh hanya berisi angka.</li>"
+            "</ul>"
+        )
+        # Apply Bootstrap styling to all fields
+        self.fields['old_password'].widget.attrs.update({'class': 'form-control'})
+        self.fields['new_password1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['new_password2'].widget.attrs.update({'class': 'form-control'})
 
 # Buat masukin initial rating yang manual (data atlet blom ada)
 class ManualIPOpinionForm(forms.ModelForm):

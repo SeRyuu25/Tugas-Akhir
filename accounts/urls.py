@@ -1,4 +1,4 @@
-from django.urls import path, reverse_lazy, include
+from django.urls import path, reverse_lazy
 from allauth.account.views import LoginView, LogoutView
 from .views import (
     create_ip_account,
@@ -18,6 +18,7 @@ from .views import (
     request_email_change,
 )
 from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
+from .forms import CustomPasswordChangeForm
 
 urlpatterns = [
     # Custom Signup (daftar) 3-page confirmation (cek referensi -> bikin akun sesuai data)
@@ -52,6 +53,7 @@ urlpatterns = [
     path(
       'password_change/',
       PasswordChangeView.as_view(
+        form_class=CustomPasswordChangeForm,
         template_name='accounts/password_change.html',
         success_url=reverse_lazy('password_change_done')
       ),

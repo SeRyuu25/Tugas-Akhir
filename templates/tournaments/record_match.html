@@ -15,7 +15,7 @@
 <div class="my-4">
   <h2>Rekam Hasil Pertandingan</h2>
   <p>Tournament: {{ tournament.name }}</p>
-  <p>Ronde: {% get_round_label match.round tournament.player_limit %}</p>
+  <p>Ronde: {{ match.context_label }}</p>
   <p>Pertandingan: {{ match.athlete1.user.nickname }} vs {{ match.athlete2.user.nickname }}</p>
 
   <div class="row">

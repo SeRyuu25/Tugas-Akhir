@@ -59,6 +59,36 @@ def get_loser(match):
         # Otherwise, if athlete2 won, then athlete1 is the loser
         return match.athlete1
 
+@register.simple_tag
+def get_player_scores(match, athlete):
+    """
+    Returns a list of dictionaries, one for each set, containing the score
+    and whether the athlete won that set.
+    """
+    scores_data = []
+    is_athlete1 = (athlete == match.athlete1)
+    
+    all_sets = [
+        (match.set1_p1, match.set1_p2),
+        (match.set2_p1, match.set2_p2),
+        (match.set3_p1, match.set3_p2),
+        (match.set4_p1, match.set4_p2),
+        (match.set5_p1, match.set5_p2)
+    ]
+
+    for p1_score, p2_score in all_sets:
+        player_score = p1_score if is_athlete1 else p2_score
+        opponent_score = p2_score if is_athlete1 else p1_score
+        
+        won_set = False
+        if player_score is not None and opponent_score is not None:
+            if player_score >= 11 and player_score >= opponent_score + 2:
+                won_set = True
+        
+        scores_data.append({'score': player_score, 'won_set': won_set})
+            
+    return scores_data
+
 @register.filter
 def form_field(form, field_name):
     """
