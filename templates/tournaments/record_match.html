@@ -64,50 +64,73 @@
 
 {# ─── JS to disable extra sets once someone hits 3 wins ─── #}
 <script>
-  // Your existing, correct JavaScript for locking sets goes here.
-  // No changes are needed for the script.
-  document.addEventListener('DOMContentLoaded', () => {
-      const scoreInputs = document.querySelectorAll('.score-input');
-      
-      const updateLock = () => {
-          let p1_sets_won = 0;
-          let p2_sets_won = 0;
-          let match_over = false;
-          
-          for (let i = 1; i <= 5; i++) {
-              const p1_input = document.getElementById(`id_set${i}_p1`);
-              const p2_input = document.getElementById(`id_set${i}_p2`);
+document.addEventListener('DOMContentLoaded', () => {
+    const scoreInputs = document.querySelectorAll('.score-input');
 
-              if (match_over) {
-                  p1_input.disabled = true;
-                  p2_input.disabled = true;
-              } else {
-                  p1_input.disabled = false;
-                  p2_input.disabled = false;
-                  
-                  const p1_val_str = p1_input.value;
-                  const p2_val_str = p2_input.value;
-              
-                  if (p1_val_str !== '' && p2_val_str !== '') {
-                      const p1_score = parseInt(p1_val_str, 10);
-                      const p2_score = parseInt(p2_val_str, 10);
-              
-                      if (p1_score >= 11 && p1_score >= p2_score + 2) {
-                          p1_sets_won++;
-                      } else if (p2_score >= 11 && p2_score >= p1_score + 2) {
-                          p2_sets_won++;
-                      }
-                  }
-                  
-                  if (p1_sets_won === 3 || p2_sets_won === 3) {
-                      match_over = true;
-                  }
-              }
-          }
-      };
+    // Stricter helper function to check for a PLAUSIBLE win
+    const isPlausibleSetWin = (scoreA, scoreB) => {
+        const winner = Math.max(scoreA, scoreB);
+        const loser = Math.min(scoreA, scoreB);
 
-      scoreInputs.forEach(input => input.addEventListener('input', updateLock));
-      updateLock();
-  });
+        if (winner < 11) return false; // No winner yet
+
+        // Normal win condition: Winner has 11, loser has 9 or less.
+        if (winner === 11) return loser <= 9;
+        
+        // Deuce win condition: Winner is > 11 and won by exactly 2.
+        return winner === loser + 2;
+    };
+
+    const updateValidation = () => {
+        let p1_sets_won = 0;
+        let p2_sets_won = 0;
+        let match_over = false;
+        
+        for (let i = 1; i <= 5; i++) {
+            const p1_input = document.getElementById(`id_set${i}_p1`);
+            const p2_input = document.getElementById(`id_set${i}_p2`);
+
+            // Always clear previous validation states
+            p1_input.classList.remove('is-invalid');
+            p2_input.classList.remove('is-invalid');
+
+            // --- Set locking logic ---
+            if (match_over) {
+                p1_input.disabled = true;
+                p2_input.disabled = true;
+            } else {
+                p1_input.disabled = false;
+                p2_input.disabled = false;
+
+                const p1_val = p1_input.value;
+                const p2_val = p2_input.value;
+
+                if (p1_val !== '' && p2_val !== '') {
+                    const p1_score = parseInt(p1_val, 10);
+                    const p2_score = parseInt(p2_val, 10);
+
+                    // If a score is entered, check if it's a valid end-of-set score
+                    if (isPlausibleSetWin(p1_score, p2_score)) {
+                        if (p1_score > p2_score) p1_sets_won++;
+                        else p2_sets_won++;
+                    } else {
+                        // If both scores are >= 11 but it's not a valid deuce win, mark as invalid
+                        if (p1_score >= 10 && p2_score >= 10) {
+                            p1_input.classList.add('is-invalid');
+                            p2_input.classList.add('is-invalid');
+                        }
+                    }
+                }
+            }
+
+            if (p1_sets_won === 3 || p2_sets_won === 3) {
+                match_over = true;
+            }
+        }
+    };
+
+    scoreInputs.forEach(input => input.addEventListener('input', updateValidation));
+    updateValidation();
+});
 </script>
 {% endblock %}

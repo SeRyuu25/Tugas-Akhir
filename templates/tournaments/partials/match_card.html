@@ -1,0 +1,23 @@
+{% load static %}
+
+{% if not match.winner %}
+  {# --- Display for an UNFINISHED match --- #}
+  <div class="d-flex align-items-center justify-content-center h-100">
+    <div class="text-center">
+      <img src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete1.user.nickname }}">
+      <div>{{ match.athlete1.user.nickname }}</div>
+    </div>
+    <div class="fw-bold mx-3">vs</div>
+    <div class="text-center">
+      <img src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete2.user.nickname }}">
+      <div>{{ match.athlete2.user.nickname }}</div>
+    </div>
+  </div>
+  {% if user == tournament.host or user.is_superuser %}
+    <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
+  {% endif %}
+
+{% else %}
+  {# --- Display for a FINISHED match by including your existing partial --- #}
+  {% include "tournaments/partials/match_result_table.html" with match=match %}
+{% endif %}

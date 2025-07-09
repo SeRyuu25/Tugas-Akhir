@@ -19,6 +19,7 @@
     <div class="mb-3">
       <label for="{{ form.password1.id_for_label }}" class="form-label">Kata Sandi</label>
       {{ form.password1 }}
+      <div id="password-feedback" class="form-text mt-1"></div>
       {% if form.password1.help_text %}
         <div class="form-text mt-1">{{ form.password1.help_text|safe }}</div>
       {% endif %}
@@ -54,6 +55,7 @@
     <div class="mb-3">
       <label for="{{ form.profile_image.id_for_label }}" class="form-label">Foto Profil</label>
       {{ form.profile_image }}
+      <div id="image-error" class="text-danger mt-1"></div> 
       {% if form.profile_image.errors %}
         <div class="text-danger">{{ form.profile_image.errors }}</div>
       {% endif %}
@@ -62,4 +64,61 @@
     <button type="submit" class="btn btn-primary">Daftar</button>
   </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 1. FILE SIZE VALIDATION ---
+    const imageInput = document.getElementById('id_profile_image');
+    const imageErrorDiv = document.getElementById('image-error');
+    const form = imageInput.closest('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+    imageInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            if (file.size > MAX_FILE_SIZE) {
+                if (imageErrorDiv) imageErrorDiv.textContent = 'Ukuran gambar tidak boleh melebihi 2MB.';
+                this.value = ''; 
+                submitButton.disabled = true;
+            } else {
+                if (imageErrorDiv) imageErrorDiv.textContent = '';
+                submitButton.disabled = false;
+            }
+        }
+    });
+
+    // --- 2. REAL-TIME PASSWORD VALIDATION ---
+    const passwordInput = document.getElementById('id_password1');
+    const passwordFeedbackDiv = document.getElementById('password-feedback');
+
+    if (passwordInput && passwordFeedbackDiv) {
+        const validatePassword = () => {
+            const password = passwordInput.value;
+            let errors = [];
+
+            if (password.length > 0 && password.length < 8) {
+                errors.push('Harus setidaknya 8 karakter.');
+            }
+            if (/^\d+$/.test(password)) {
+                errors.push('Tidak boleh hanya berisi angka.');
+            }
+
+            if (errors.length > 0) {
+                passwordInput.classList.remove('is-valid');
+                passwordInput.classList.add('is-invalid');
+                passwordFeedbackDiv.innerHTML = `<span class="text-danger">${errors.join('<br>')}</span>`;
+            } else if (password.length > 0) {
+                passwordInput.classList.remove('is-invalid');
+                passwordInput.classList.add('is-valid');
+                passwordFeedbackDiv.innerHTML = '<span class="text-success">Kata sandi terlihat bagus!</span>';
+            } else {
+                passwordInput.classList.remove('is-valid', 'is-invalid');
+                passwordFeedbackDiv.innerHTML = '';
+            }
+        };
+        passwordInput.addEventListener('blur', validatePassword);
+    }
+});
+</script>
 {% endblock %}

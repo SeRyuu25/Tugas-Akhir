@@ -32,7 +32,7 @@
               </li>
               {% if user.is_authenticated %}
                 <li class="nav-item dropdown m-2" id="profileDropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <img id="profilePic" src="
                     {% if user.profile_image %}
                       {{ user.profile_image.url }}
@@ -40,9 +40,12 @@
                       {% static 'images/default_profile.jpg' %}
                     {% endif %}"
                     alt="Profile Picture" style="width: 30px; height: 30px; border-radius: 50%;">
+
+                    <span class="ms-2">
+                      Halo, {{ user.nickname }}
+                    </span>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    <li><span class="dropdown-item-text">Halo, {{ user.nickname }}!</span></li>
                     <li><a class="dropdown-item" href="{% url 'profile' %}">Profil</a></li>
                     {% if user.is_superuser or user.role == 'admin' %}
                       <li><a class="dropdown-item" href="{% url 'admin:index' %}">Dashboard Admin</a></li>
@@ -53,7 +56,7 @@
                         {% csrf_token %}
                         <button type="submit" class="dropdown-item btn btn-link d-block text-start m-0 p-0">Keluar</button>
                       </form>
-                    </li>                                                         
+                    </li>
                   </ul>
                 </li>
               {% else %}

@@ -26,6 +26,8 @@
         
         <!-- Custom button that triggers file input -->
         <label for="profile_image" class="btn btn-outline-primary rounded mt-3 w-100" style="text-align: center;">Ubah Foto Profil</label>
+        
+        <div id="image-error" class="text-danger text-center mt-1"></div>
       </div>
       
       {% if form.profile_image.errors %}
@@ -55,23 +57,48 @@
   </form>
 </div>
 
-<!-- Preview Image Javascript -->
 <script>
-  function previewImage(event) {
+function previewImage(event) {
     const preview = document.getElementById('profile-img-preview');
-    const file = event.target.files[0];
+    const fileInput = event.target;
+    const file = fileInput.files[0];
+    const errorDiv = document.getElementById('image-error');
+    const submitButton = fileInput.closest('form').querySelector('button[type="submit"]');
+
+    // Reset previous error messages
+    errorDiv.textContent = '';
+    submitButton.disabled = false;
 
     if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        preview.src = e.target.result;
-        preview.style.display = 'block'; // Make sure the image is visible
-      }
-      reader.readAsDataURL(file);
-    } else {
-      preview.style.display = 'none'; // Hide preview if no file is selected
-    }
-  }
-</script>
+        // --- NEW: FILE SIZE VALIDATION ---
+        const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+        if (file.size > MAX_FILE_SIZE) {
+            errorDiv.textContent = 'Ukuran gambar tidak boleh melebihi 2MB.';
+            fileInput.value = ''; // Clear the invalid file selection
+            submitButton.disabled = true;
+            return; // Stop the function here
+        }
+        // --- END OF VALIDATION ---
 
+        // If file size is valid, proceed with the preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Check if the preview element is an img or a div
+            if (preview.tagName.toLowerCase() === 'img') {
+                preview.src = e.target.result;
+            } else {
+                const newImg = document.createElement('img');
+                newImg.id = 'profile-img-preview';
+                newImg.className = 'profile-img-preview';
+                newImg.src = e.target.result;
+                
+                // Replace the old div with our new img
+                preview.parentNode.replaceChild(newImg, preview);
+            }
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+</script>
 {% endblock %}

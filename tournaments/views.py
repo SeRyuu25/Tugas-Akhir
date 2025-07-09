@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import TournamentForm, MatchForm
-from .models import Tournament, Match, TournamentPool
+from .models import Tournament, Match, TournamentPool, round_label
 from accounts.models import AthleteProfile
 from ratings.models import RatingHistory
 from ratings.elo import process_match
@@ -33,6 +33,10 @@ def create_tournament(request):
         if form.is_valid():
             tournament = form.save(commit=False)
             tournament.host = request.user
+            if tournament.tournament_type == 'knockout':
+                tournament.stage = 'knockout'
+            else:
+                tournament.stage = 'pool'
             tournament.save()
             messages.success(request, "Turnamen berhasil dibuat.")
             return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
@@ -49,24 +53,57 @@ def tournament_detail(request, tournament_id):
     # Buat pengelompokan pertandingan (rounds buat Gugur / Knockout, pools buat Pools) - bentuknya dictionary
     rounds = {}
     pools_with_matches = []
-    pool_winners = []
+    final_results = {}
 
-    if tournament.tournament_type == 'knockout':
-        for match in tournament.matches.all().order_by('round', 'id'):
-            rounds.setdefault(match.round, []).append(match)
-    
-    elif tournament.tournament_type == 'pool':
-        all_pools = tournament.pools.all().order_by('name')
-
-        for pool in all_pools:
-            matches_in_pool = pool.matches.all().order_by('id')
-            pools_with_matches.append({'pool': pool, 'matches': matches_in_pool})
-
-        if tournament.is_finished:
+    # Kalo turnament udh beres, display hasil ordernya reverse (dari final dulu)
+    if tournament.is_finished:
+        if tournament.tournament_type == 'pool':
+            for match in tournament.matches.filter(pool__isnull=True).order_by('-round', 'id'):
+                rounds.setdefault(match.round, []).append(match)
+            all_pools = tournament.pools.all().order_by('name')
             for pool in all_pools:
-                winner = get_pool_winner(pool)
-                if winner:
-                    pool_winners.append({'pool': pool, 'winner': winner})
+                pools_with_matches.append({
+                    'pool': pool, 
+                    'matches': pool.matches.all().order_by('id')
+                })
+        else: # Buat yg sistem gugur
+            for match in tournament.matches.all().order_by('-round', 'id'):
+                rounds.setdefault(match.round, []).append(match)
+
+    # Kalo belom beres, sesuai urutan (ronde 1 sampe final)
+    else:
+        if tournament.tournament_type == 'knockout':
+            for match in tournament.matches.all().order_by('round', 'id'):
+                rounds.setdefault(match.round, []).append(match)
+        
+        elif tournament.tournament_type == 'pool':
+            all_pools = tournament.pools.all().order_by('name')
+            for pool in all_pools:
+                pools_with_matches.append({
+                    'pool': pool, 
+                    'matches': pool.matches.all().order_by('id')
+                })
+            if tournament.stage == 'knockout':
+                for match in tournament.matches.filter(pool__isnull=True).order_by('round', 'id'):
+                    rounds.setdefault(match.round, []).append(match)
+
+    if tournament.is_finished:
+        final_round_num = tournament.get_final_round_number()
+        if final_round_num:
+            final_match = tournament.matches.filter(round=final_round_num).first()
+            if final_match and final_match.winner():
+                final_results['rank1'] = final_match.winner()
+                final_results['rank2'] = final_match.athlete1 if final_match.winner() == final_match.athlete2 else final_match.athlete2
+
+                # Find Top 4 (semifinal losers)
+                semifinal_round_num = final_round_num - 1
+                semifinal_matches = tournament.matches.filter(round=semifinal_round_num)
+                semifinal_losers = []
+                for match in semifinal_matches:
+                    if match.winner():
+                        loser = match.athlete1 if match.winner() == match.athlete2 else match.athlete2
+                        semifinal_losers.append(loser)
+                final_results['top4'] = semifinal_losers
             
     first_round_exists = tournament.matches.filter(round=1).exists() or tournament.matches.filter(pool__isnull=False).exists()
     
@@ -75,7 +112,7 @@ def tournament_detail(request, tournament_id):
         'rounds': rounds,
         'pools_with_matches': pools_with_matches,
         'first_round_exists': first_round_exists,
-        'pool_winners': pool_winners,
+        'final_results': final_results,
     })
 
 # View kalo ada atlet yang daftar ke suatu upcoming turney
@@ -165,7 +202,7 @@ def create_pools_and_matches(tournament):
     participants = list(tournament.participants.all())
     random.shuffle(participants)
 
-    players_per_pool = 3 # As we decided
+    players_per_pool = 3 # Nanti bisa diganti kalo mau lbh banyak pemain di 1 pool
     num_pools = tournament.player_limit // players_per_pool
 
     for i in range(num_pools):
@@ -261,16 +298,18 @@ def record_match(request, tournament_id, match_id):
                 )
 
             # After saving the match, check if this completes the round
-            if match.pool:
+            if tournament.tournament_type == 'pool' and tournament.stage == 'pool':
                 if is_pool_complete(match.pool):
                     messages.info(request, f"Semua pertandingan di {match.pool.name} telah selesai.")
                     if are_all_pools_finished(tournament):
-                        tournament.is_finished = True
-                        tournament.save(update_fields=['is_finished'])
-                        messages.success(request, f"Turnamen '{tournament.name}' telah selesai!")
+                        # Transition to knockout stage
+                        tournament.stage = 'knockout'
+                        tournament.save(update_fields=['stage'])
+                        generate_knockout_stage_for_pools(tournament, request)
             elif match.round:
                 if is_round_complete(tournament, match.round):
-                    messages.info(request, f"Semua pertandingan di Ronde {match.round} telah selesai.")
+                    round_name = match.context_label
+                    messages.info(request, f"Semua pertandingan di babak {round_name} telah selesai.")
                     generate_next_round(tournament, match.round, request)
 
             messages.success(request, "Hasil pertandingan berhasil disimpan.")
@@ -288,12 +327,36 @@ def record_match(request, tournament_id, match_id):
         'form': form,
     })
 
+# Buat pindah dari pool ke knockout (ambil pemenang pool trus generate ronde 1 knockout)
+def generate_knockout_stage_for_pools(tournament, request):
+    pools = tournament.pools.all().order_by('name')
+    winners = [get_pool_winner(pool) for pool in pools if get_pool_winner(pool) is not None]
+
+    if not winners or len(winners) != tournament.pools.count():
+        messages.error(request, "Gagal mengumpulkan pemenang pool untuk memulai babak gugur.")
+        return
+
+    random.shuffle(winners)
+
+    knockout_start_round = 1
+
+    for i in range(0, len(winners), 2):
+        if i + 1 < len(winners):
+            Match.objects.create(
+                tournament=tournament,
+                athlete1=winners[i],
+                athlete2=winners[i+1],
+                round=knockout_start_round
+            )
+    messages.success(request, f"Babak Gugur (Pool) telah dibuat dengan {len(winners)} pemenang pool.")
+
 # Func buat cek 1 ronde udh beres ato blom
 def is_round_complete(tournament, round_number):
     """
     Check if all matches in the given round are completed.
     """
     matches = tournament.matches.filter(round=round_number)
+    if not matches.exists(): return False
     return all(match.winner() is not None for match in matches)
 
 # Fungsi buat cek apakah semua pertandingan di 1 pool sudah beres ato blom
@@ -378,15 +441,15 @@ def generate_next_round(tournament, current_round, request):
     current_matches = tournament.matches.filter(round=current_round)
     winners = [m.winner() for m in current_matches if m.winner() is not None]
 
-    # Check if this was the final round by seeing if there's only one winner left
-    if len(winners) == 1:
-        final_winner = winners[0]
-        messages.success(request, f"Turnamen telah selesai. Pemenangnya adalah {final_winner.user.nickname}!")
-        
-        # --- Mark the tournament as finished ---
-        tournament.is_finished = True
-        tournament.save(update_fields=['is_finished'])
-        return # Stop further processing
+    # Buat cek klo final round
+    final_round_num = tournament.get_final_round_number()
+    if current_round == final_round_num:
+        if winners:
+            final_winner = winners[0]
+            messages.success(request, f"Turnamen telah selesai. Pemenangnya adalah {final_winner.user.nickname}!")
+            tournament.is_finished = True
+            tournament.save(update_fields=['is_finished'])
+        return
 
     # If there are no winners yet but the round is complete (e.g. invalid data), do nothing
     if not winners:
@@ -407,7 +470,9 @@ def generate_next_round(tournament, current_round, request):
                 athlete2=athlete2,
                 round=next_round_number
             )
-    messages.info(request, f"Pertandingan ronde {next_round_number} sudah dibuat.")
+    player_count = len(winners) * 2 # player count for the round that just finished
+    next_round_label = round_label(next_round_number, player_count)
+    messages.info(request, f"Pertandingan untuk babak {next_round_label} sudah dibuat.")
 
 # Func buat nentuin final round
 def get_final_round(player_limit):

@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from allauth.account.models import EmailAddress
 
 from accounts.models import CustomUser, AthleteProfile, IPRatingOpinion, AthleteAccountReference
-from tournaments.models import Tournament, Match
+from tournaments.models import Tournament, Match, TournamentPool
 from ratings.models import RatingHistory
 from accounts.admin import CustomUserAdmin, AthleteAccountReferenceAdmin
 from tournaments.admin import TournamentAdmin
@@ -33,6 +33,7 @@ my_admin_site.register(IPRatingOpinion)
 my_admin_site.register(AthleteAccountReference, AthleteAccountReferenceAdmin)
 my_admin_site.register(Tournament, TournamentAdmin)
 my_admin_site.register(Match)
+my_admin_site.register(TournamentPool)
 my_admin_site.register(RatingHistory)
 
 my_admin_site.register(Site)

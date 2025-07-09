@@ -33,6 +33,7 @@ class Tournament(models.Model):
         limit_choices_to={'role': 'ip'}
     )
     participants = models.ManyToManyField(AthleteProfile, related_name='tournaments', blank=True)
+    stage = models.CharField(max_length=10, choices=[('pool', 'Babak Pool'), ('knockout', 'Babak Gugur')], null=True, blank=True)
     created_at   = models.DateTimeField(auto_now_add=True)
     is_finished  = models.BooleanField(default=False)
     # Nanti bisa ditambah desc laen kyk lokasi dll
@@ -41,6 +42,9 @@ class Tournament(models.Model):
         """Calculates the final round number for a knockout tournament."""
         if self.player_limit > 0 and self.tournament_type == 'knockout':
             return int(math.log2(self.player_limit))
+        if self.player_limit > 0 and self.tournament_type == 'pool':
+            num_pools = self.player_limit / 3
+            return int(math.log2(num_pools))
         return None
 
     def __str__(self):
@@ -90,12 +94,12 @@ class Match(models.Model):
     @property
     def context_label(self):
         if self.round:
-            # Use the existing round_label function for knockout matches
-            return round_label(self.round, self.tournament.player_limit)
+            # For pool tournaments, the number of "players" in the knockout stage is the number of pools
+            knockout_participants = self.tournament.pools.count() if self.tournament.tournament_type == 'pool' else self.tournament.player_limit
+            return round_label(self.round, knockout_participants)
         elif self.pool:
-            # For pool matches, just return the pool's name
             return self.pool.name
-        return "N/A" # Fallback
+        return "N/A"
 
     # Hitung total set yg dimenangkan pemain (untuk ngecek seorang pemain udah menang berapa)
     def total_sets_won(self, athlete):
@@ -149,27 +153,14 @@ class Match(models.Model):
         return f"{self.tournament.name} - {self.context_label}: {self.athlete1.user.nickname} vs {self.athlete2.user.nickname}"
     
 # Buat ngasih label ke html page turnamen detail
-def round_label(round_number, player_limit):
-    """
-    Maps the integer round to a human-readable label.
-    For an 8-player tournament: 3 rounds -> R1=Round of 8, R2=Semifinal, R3=Final
-    For a 16-player tournament: 4 rounds -> R1=Round of 16, R2=Round of 8, R3=Semifinal, R4=Final
-    """
-    if player_limit == 8:
-        mapping = {
-            1: "Babak 8 Besar",
-            2: "Semifinal",
-            3: "Final"
-        }
-    elif player_limit == 16:
-        mapping = {
-            1: "Babak 16 Besar",
-            2: "Babak 8 Besar",
-            3: "Semifinal",
-            4: "Final"
-        }
-    else:
-        # Fallback or a more generic approach
-        mapping = {round_number: f"Ronde {round_number}"}
+def round_label(round_number, player_count):
+    total_rounds = int(math.log2(player_count)) if player_count > 0 else 0
     
-    return mapping.get(round_number, f"Ronde {round_number}")
+    if round_number == total_rounds:
+        return "Final"
+    if round_number == total_rounds - 1:
+        return "Semifinal"
+    
+    # Buat yang Babak X Besar
+    num_players_in_round = 2 ** (total_rounds - round_number + 1)
+    return f"Babak {num_players_in_round} Besar"

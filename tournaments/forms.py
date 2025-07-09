@@ -43,28 +43,61 @@ class MatchForm(forms.ModelForm):
         }
 
     def clean(self):
-        cleaned = super().clean()
-        wins1 = wins2 = 0
-        decided = None
+        cleaned_data = super().clean()
+        
+        # Helper function to check for a plausible score
+        def is_plausible_set_win(score1, score2):
+            # Don't validate empty sets, only sets with scores
+            if score1 is None or score2 is None:
+                return True 
+            
+            winner = max(score1, score2)
+            loser = min(score1, score2)
 
-        # Otomatis menghitung set sampe ada yg 3 duluan
-        for idx in range(1,6):
-            p1 = cleaned.get(f'set{idx}_p1') or 0
-            p2 = cleaned.get(f'set{idx}_p2') or 0
-            if p1 > p2:
-                wins1 += 1
-            elif p2 > p1:
-                wins2 += 1
+            # A winner must have at least 11 points. If not, it's not a completed set.
+            # We don't raise an error here, because the user might be halfway through typing.
+            if winner < 11:
+                return False 
+            
+            # Normal win: score is 11, loser is 9 or less.
+            if winner == 11:
+                return loser <= 9
+            
+            # Deuce win: score is > 11, must win by exactly 2.
+            return winner == loser + 2
 
-            if wins1 == 3 or wins2 == 3:
-                decided = idx
-                break
+        p1_wins = 0
+        p2_wins = 0
+        match_decided_at_set = None
 
-        # Memastikan tidak ada skor yang aneh bila sudah ada pemenang
-        if decided:
-            for idx in range(decided+1, 6):
-                if (cleaned.get(f'set{idx}_p1') or 0) > 0 or (cleaned.get(f'set{idx}_p2') or 0) > 0:
-                    raise forms.ValidationError(
-                        f"Set {idx} harus kosong atau 0 saat seorang pemain sudah menang 3 set (menang di set {decided})."
+        for i in range(1, 6):
+            p1 = cleaned_data.get(f'set{i}_p1')
+            p2 = cleaned_data.get(f'set{i}_p2')
+
+            # Only validate sets that have scores entered
+            if p1 is not None and p2 is not None:
+                if not is_plausible_set_win(p1, p2):
+                    # This score is impossible (e.g., 23-5 or 11-10)
+                    raise ValidationError(f"Skor pada Set {i} ({p1}-{p2}) tidak valid. Permainan harus dimenangkan dengan skor 11 (selisih 2 poin) atau saat deuce (selisih 2 poin).")
+                
+                # Count wins if it's a valid set
+                if (p1 >= 11 and p1 >= p2 + 2) or (p2 >= 11 and p2 >= p1 + 2):
+                    if p1 > p2: p1_wins += 1
+                    elif p2 > p1: p2_wins += 1
+            
+            # Check if the match is over
+            if not match_decided_at_set and (p1_wins >= 3 or p2_wins >= 3):
+                match_decided_at_set = i
+
+        # Check for scores entered in sets after the match was already decided
+        if match_decided_at_set:
+            for i in range(match_decided_at_set + 1, 6):
+                p1 = cleaned_data.get(f'set{i}_p1')
+                p2 = cleaned_data.get(f'set{i}_p2')
+                # A score is only invalid if it's greater than 0
+                if (p1 or 0) > 0 or (p2 or 0) > 0:
+                    raise ValidationError(
+                        f"Set {i} harus kosong karena pertandingan sudah selesai di Set {match_decided_at_set}."
                     )
-        return cleaned
+
+        return cleaned_data

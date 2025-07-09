@@ -4,202 +4,196 @@
 
 {% block content %}
 <div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-1">
     <h2>{{ tournament.name }}</h2>
     {% if user.is_authenticated and user == tournament.host and tournament.participants.count == tournament.player_limit and not first_round_exists %}
       <a href="{% url 'tournaments:start_tournament' tournament.id %}" class="btn btn-primary">Mulai Turnamen</a>
     {% endif %}
   </div>
 
-  <p>Tanggal Mulai Turnamen: {{ tournament.start_date }}</p>
-  <p>Jumlah Maksimal Atlet: {{ tournament.player_limit }}</p>
+  <p>Tipe Turnamen: {{ tournament.get_tournament_type_display }}</p>
+  <p>Tanggal Mulai: {{ tournament.start_date }}</p>
+  <p>Jumlah Maksimum Atlet: {{ tournament.player_limit }}</p>
 
-  {% if user.is_authenticated and user.role == 'atlet' %}
+  {% if user.is_authenticated and user.role == 'atlet' and not tournament.is_finished and not first_round_exists %}
     {% if tournament.participants.count < tournament.player_limit %}
       <a href="{% url 'tournaments:register_for_tournament' tournament.id %}" class="btn btn-success mb-3">Registrasi Turnamen</a>
-    {% elif not first_round_exists %}
+    {% else %}
       <p class="alert alert-info">Registrasi Turnamen ini sudah ditutup.</p>
     {% endif %}
   {% endif %}
 
-  {# Display a list of Pool Winners if the tournament is a finished pool tournament #}
-  {% if tournament.is_finished and tournament.tournament_type == 'pool' %}
-    <div class="text-center my-4">
-      <h1 class="display-5 text-warning">PEMENANG POOL</h1>
-      <div class="row justify-content-center g-3 mt-2">
-        {% for item in pool_winners %}
-          <div class="col-md-4 col-sm-6">
-            <div class="winner-card p-3 bg-light rounded shadow-sm">
-              <h4 class="text-muted">{{ item.pool.name }}</h4>
-              {% if item.winner.user.profile_image %}
-                <img
-                  src="{{ item.winner.user.profile_image.url }}"
-                  class="rounded-circle my-2"
-                  style="width:80px; height:80px; object-fit:cover;"
-                  alt="{{ item.winner.user.nickname }}"
-                >
-              {% else %}
-                <img
-                  src="{% static 'images/default_profile.jpg' %}"
-                  class="rounded-circle my-2"
-                  style="width:80px; height:80px; object-fit:cover;"
-                  alt="Default profile"
-                >
-              {% endif %}
-              <h3 class="fw-bold">{{ item.winner.user.nickname }}</h3>
-            </div>
+  {# --- NEW: Final Results Display --- #}
+  {% if tournament.is_finished and final_results %}
+  <div class="text-center my-4 p-4 bg-light rounded shadow-sm">
+      <h1 class="display-5 text-warning mb-4">HASIL AKHIR</h1>
+      <div class="row justify-content-center align-items-end g-3">
+
+          <div class="col-12 col-md-4 order-md-2">
+              <div class="winner-card p-4 border border-warning border-3">
+                  <h2 class="text-warning">JUARA 1</h2>
+                  {% if final_results.rank1.user.profile_image %}
+                      <img src="{{ final_results.rank1.user.profile_image.url }}" class="rounded-circle my-2" style="width:120px; height:120px; object-fit:cover;" alt="{{ final_results.rank1.user.nickname }}">
+                  {% else %}
+                      <img src="{% static 'images/default_profile.jpg' %}" class="rounded-circle my-2" style="width:120px; height:120px; object-fit:cover;" alt="Default profile">
+                  {% endif %}
+                  <h1 class="fw-bolder">{{ final_results.rank1.user.nickname }}</h1>
+              </div>
           </div>
-        {% endfor %}
+
+          <div class="col-12 col-md-4 order-md-1">
+              <div class="winner-card p-3">
+                  <h4 class="text-muted">Juara 2</h4>
+                  {% if final_results.rank2.user.profile_image %}
+                      <img src="{{ final_results.rank2.user.profile_image.url }}" class="rounded-circle my-2" style="width:100px; height:100px; object-fit:cover;" alt="{{ final_results.rank2.user.nickname }}">
+                  {% else %}
+                      <img src="{% static 'images/default_profile.jpg' %}" class="rounded-circle my-2" style="width:100px; height:100px; object-fit:cover;" alt="Default profile">
+                  {% endif %}
+                  <h3 class="fw-bold">{{ final_results.rank2.user.nickname }}</h3>
+              </div>
+          </div>
+
+          <div class="col-12 col-md-4 order-md-3">
+              <div class="winner-card p-3">
+                  <h4 class="text-muted">Top 4</h4>
+                  {% for athlete in final_results.top4 %}
+                      <div class="d-flex align-items-center justify-content-center mb-2">
+                          {% if athlete.user.profile_image %}
+                              <img src="{{ athlete.user.profile_image.url }}" class="rounded-circle me-2" style="width:80px; height:80px; object-fit:cover;" alt="{{ athlete.user.nickname }}">
+                          {% else %}
+                              <img src="{% static 'images/default_profile.jpg' %}" class="rounded-circle me-2" style="width:80px; height:80px; object-fit:cover;" alt="Default profile">
+                          {% endif %}
+                          <h5 class="fw-bold m-0">{{ athlete.user.nickname }}</h5>
+                      </div>
+                  {% endfor %}
+              </div>
+          </div>
+          
       </div>
-    </div>
-  {# Display a single champion if the tournament is a finished knockout tournament #}
-  {% elif tournament.is_finished and tournament.tournament_type == 'knockout' %}
-    {% with final_match=tournament.matches.last %}
-      {% if final_match.winner %}
-        <div class="text-center my-4">
-          <h1 class="display-4 text-warning">JUARA 1</h1>
-          <div class="winner-card p-3 bg-light rounded shadow-sm">
-            {% if final_match.winner.user.profile_image %}
-              <img
-                src="{{ final_match.winner.user.profile_image.url }}"
-                class="rounded-circle mb-2"
-                style="width:100px; height:100px; object-fit:cover;"
-                alt="{{ final_match.winner.user.nickname }}"
-              >
-            {% else %}
-              <img
-                src="{% static 'images/default_profile.jpg' %}"
-                class="rounded-circle mb-2"
-                style="width:100px; height:100px; object-fit:cover;"
-                alt="Default profile"
-              >
-            {% endif %}
-            <h2 class="fw-bold">{{ final_match.winner.user.nickname }}</h2>
-            <p class="text-muted">Selamat!</p>
-          </div>
-        </div>
-      {% endif %}
-    {% endwith %}
+  </div>
   {% endif %}
 
-  <h3>Atlet Terdaftar</h3>
-  <div class="row">
+  <h3>Atlet Terdaftar ({{ tournament.participants.count }}/{{ tournament.player_limit }})</h3>
+  <div class="row mb-4 mt-3">
     {% for athlete in tournament.participants.all %}
-      <div class="col-6 col-md-4 mb-3">
-        <div class="d-flex align-items-center">
-          {% if athlete.user.profile_image %}
-            <img
-              src="{{ athlete.user.profile_image.url }}"
-              class="rounded-circle me-2"
-              style="width:50px; height:50px;"
-              alt="{{ athlete.user.nickname }}"
-            >
-          {% else %}
-            <img
-              src="{% static 'images/default_profile.jpg' %}"
-              class="rounded-circle me-2"
-              style="width:50px; height:50px;"
-              alt="Default profile"
-            >
-          {% endif %}
-          <span>{{ athlete.user.nickname }}</span>
-        </div>
+      <div class="col-6 col-md-3 mb-3">
+          <a href="{% url 'public_profile' athlete.id %}" class="text-decoration-none text-dark">
+              <div class="d-flex align-items-center p-2 bg-white rounded shadow-sm h-100">
+                  {% if athlete.user.profile_image %}
+                      <img src="{{ athlete.user.profile_image.url }}" class="rounded-circle me-2" style="width:50px; height:50px; object-fit:cover;" alt="{{ athlete.user.nickname }}">
+                  {% else %}
+                      <img src="{% static 'images/default_profile.jpg' %}" class="rounded-circle me-2" style="width:50px; height:50px; object-fit:cover;" alt="Default profile">
+                  {% endif %}
+                  <span class="fw-bold">{{ athlete.user.nickname }}</span>
+              </div>
+          </a>
       </div>
     {% empty %}
       <div class="col-12"><p>Belum ada atlet yang mendaftar.</p></div>
     {% endfor %}
   </div>
 
-  <!-- Daftar Pertandingan -->
   {% if tournament.matches.exists %}
-  
-    {# Check the tournament type to decide which layout to show #}
+    
     {% if tournament.tournament_type == 'pool' %}
-
-      {# --- POOL TOURNAMENT DISPLAY --- #}
-      <h3 class="mt-4">Babak Pool</h3>
-      {% for item in pools_with_matches %}
-        <div class="mb-4">
-          <h4>{{ item.pool.name }}</h4>
-          
-          <p><strong>Peserta Pool:</strong> 
-            {% for participant in item.pool.participants.all %}
-              {{ participant.user.nickname }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-          </p>
-
-          {# Display matches for this pool #}
-          <div class="row">
-            {% for match in item.matches %}
-              <div class="col-lg-6 mb-3">
-                <div class="card p-3">
-                  {% if not match.winner %}
-                    {# Display for an UNFINISHED match #}
-                    <div class="d-flex align-items-center justify-content-center">
-                      <div class="text-center">
-                        <img src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete1.user.nickname }}">
-                        <div>{{ match.athlete1.user.nickname }}</div>
-                      </div>
-                      <div class="fw-bold mx-3">vs</div>
-                      <div class="text-center">
-                        <img src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete2.user.nickname }}">
-                        <div>{{ match.athlete2.user.nickname }}</div>
-                      </div>
-                    </div>
-                    {% if user == tournament.host or user.is_superuser %}
-                      <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
-                    {% endif %}
-                  {% else %}
-                    {# Display for a FINISHED match using the partial template #}
-                    {% include "tournaments/partials/match_result_table.html" with match=match %}
-                  {% endif %}
+      {% if tournament.is_finished %}
+        {# For FINISHED tournaments, show knockout rounds first #}
+        <h3 class="mt-4">Babak Gugur</h3>
+        {% for round_number, matches in rounds.items %}
+          <div class="mb-4">
+            <h4>{{ matches.0.context_label }}</h4>
+            <div class="row">
+              {% for match in matches %}
+                <div class="col-lg-6 mb-3">
+                  <div class="card p-3 h-100">
+                    {% include "tournaments/partials/match_card.html" with match=match tournament=tournament %}
+                  </div>
                 </div>
-              </div>
-            {% endfor %}
+              {% endfor %}
+            </div>
           </div>
-        </div>
-      {% endfor %}
-      {# --- END POOL DISPLAY --- #}
+        {% endfor %}
+
+        <h3 class="mt-5 border-top pt-4">Babak Pool</h3>
+        {% for item in pools_with_matches %}
+          <div class="mb-4">
+            <h4>{{ item.pool.name }}</h4>
+            <p><strong>Peserta Pool:</strong> 
+              {% for participant in item.pool.participants.all %}
+                {{ participant.user.nickname }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+            <div class="row">
+              {% for match in item.matches %}
+                <div class="col-lg-6 mb-3">
+                  <div class="card p-3 h-100">
+                    {% include "tournaments/partials/match_card.html" with match=match tournament=tournament %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+
+      {% else %}
+        {# For ONGOING tournaments, show in chronological order (pools first) #}
+        <h3 class="mt-4">Babak Pool</h3>
+        {% for item in pools_with_matches %}
+          <div class="mb-4">
+            <h4>{{ item.pool.name }}</h4>
+            <p><strong>Peserta Pool:</strong> 
+              {% for participant in item.pool.participants.all %}
+                {{ participant.user.nickname }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+            <div class="row">
+              {% for match in item.matches %}
+                <div class="col-lg-6 mb-3">
+                  <div class="card p-3 h-100">
+                    {% include "tournaments/partials/match_card.html" with match=match tournament=tournament %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+
+        {% if tournament.stage == 'knockout' %}
+          <h3 class="mt-5 border-top pt-4">Babak Gugur</h3>
+          {% for round_number, matches in rounds.items %}
+            <div class="mb-4">
+              <h4>{{ matches.0.context_label }}</h4>
+              <div class="row">
+                {% for match in matches %}
+                  <div class="col-lg-6 mb-3">
+                    <div class="card p-3 h-100">
+                      {% include "tournaments/partials/match_card.html" with match=match tournament=tournament %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endif %}
 
     {% else %}
-    
-      {# --- KNOCKOUT TOURNAMENT DISPLAY (Your existing layout) --- #}
+      {# --- PURE KNOCKOUT TOURNAMENT DISPLAY --- #}
       <h3 class="mt-4">Babak Pertandingan</h3>
       {% for round_number, matches in rounds.items %}
         <div class="mb-4">
-          <h4>{% get_round_label round_number tournament.player_limit %}</h4>
+          <h4>{{ matches.0.context_label }}</h4>
           <div class="row">
             {% for match in matches %}
               <div class="col-lg-6 mb-3">
-                <div class="card p-3">
-                  {% if not match.winner %}
-                    {# Display for an UNFINISHED match #}
-                    <div class="d-flex align-items-center justify-content-center">
-                      <div class="me-3 text-center">
-                        <img src="{% if match.athlete1.user.profile_image %}{{ match.athlete1.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete1.user.nickname }}">
-                        <div>{{ match.athlete1.user.nickname }}</div>
-                      </div>
-                      <div class="fw-bold mx-2 align-self-center">vs</div>
-                      <div class="ms-3 text-center">
-                        <img src="{% if match.athlete2.user.profile_image %}{{ match.athlete2.user.profile_image.url }}{% else %}{% static 'images/default_profile.jpg' %}{% endif %}" class="rounded-circle mb-1" style="width:40px; height:40px; object-fit:cover;" alt="{{ match.athlete2.user.nickname }}">
-                        <div>{{ match.athlete2.user.nickname }}</div>
-                      </div>
-                    </div>
-                    {% if user == tournament.host or user.is_superuser %}
-                      <a href="{% url 'tournaments:record_match' tournament.id match.id %}" class="btn btn-warning btn-sm mt-2">Rekam Hasil</a>
-                    {% endif %}
-                  {% else %}
-                    {# Display for a FINISHED match using the partial template #}
-                    {% include "tournaments/partials/match_result_table.html" with match=match %}
-                  {% endif %}
+                <div class="card p-3 h-100">
+                  {% include "tournaments/partials/match_card.html" with match=match tournament=tournament %}
                 </div>
               </div>
             {% endfor %}
           </div>
         </div>
       {% endfor %}
-      {# --- END KNOCKOUT DISPLAY --- #}
-
     {% endif %}
 
   {% endif %}

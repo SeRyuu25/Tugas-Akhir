@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h2>Profil Anda</h2>
-    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 mt-2 mt-md-0 flex-shrink-0">
-      <a href="{% url 'edit_profile' %}" class="btn btn-secondary text-nowrap w-100 w-md-auto">Edit Profil</a>
-      <a href="{% url 'account_security_settings' %}" class="btn btn-outline-primary text-nowrap w-100 w-md-auto">Pengaturan Keamanan Akun</a>
+  <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+    <h2 class="mb-0">Profil Anda</h2>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+      <a href="{% url 'edit_profile' %}" class="btn btn-secondary">Edit Profil</a>
+      <a href="{% url 'account_security_settings' %}" class="btn btn-outline-primary">Pengaturan Keamanan Akun</a>
     </div>
   </div>
 

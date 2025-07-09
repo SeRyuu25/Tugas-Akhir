@@ -20,7 +20,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
     # Buat cek nama panggilan harus unik (tidak tergantung besar / kecil huruf)
     def clean_nickname(self, nickname):
         qs = CustomUser.objects.filter(nickname__iexact=nickname)
-        if self.request.user.is_authenticated:
+        if hasattr(self.request, 'user') and self.request.user.is_authenticated:
             qs = qs.exclude(pk=self.request.user.pk)
         if qs.exists():
             raise ValidationError("Nama panggilan sudah dipakai.")
@@ -28,9 +28,6 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
     # Buat simpan akun atlet baru
     def save_user(self, request, user, form, commit=True):
-        # ini yang dari allauth
-        user = super().save_user(request, user, form, commit=False)
-
         user.role = 'atlet'
         user.nickname  = form.cleaned_data.get("nickname", "")
         user.real_name = form.cleaned_data.get("real_name", "")
@@ -43,19 +40,14 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
         user.username = generate_unique_username(8)
 
+        user = super().save_user(request, user, form, commit)
+
         if commit:
             try:
-                user.save()
-                
-                if user.role == "atlet":
-                    profile, created = AthleteProfile.objects.get_or_create(user=user)
-                        
+                AthleteProfile.objects.get_or_create(user=user)
             except Exception as e:
                 # Log kalo tiba" error
                 logger.error(f"ADAPTER_ERROR: Error during user.save() or AthleteProfile creation in adapter for user {user.username if user.username else 'unknown'}: {e}", exc_info=True)
-                raise
-        else:
-            # Log kalo commitnya entah kenpaa false
-            logger.info(f"ADAPTER_INFO: Commit is False for user {user.username if user.username else 'unknown'}. User object not saved by adapter at this stage.")
+                pass
             
         return user

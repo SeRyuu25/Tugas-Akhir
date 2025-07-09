@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.core.exceptions import ValidationError
 from .models import CustomUser, IPRatingOpinion, AthleteAccountReference
 from django.utils.crypto import get_random_string
 from django.utils.safestring import mark_safe
@@ -57,6 +58,14 @@ class CustomSignupForm(SignupForm):
                 "Alamat email ini sudah terdaftar. Silakan gunakan email lain."
             )
         return email
+    
+    def clean_profile_image(self):
+        image = self.cleaned_data.get('profile_image', False)
+        if image:
+            # Limit to 2MB
+            if image.size > 2 * 1024 * 1024:
+                raise ValidationError("Ukuran gambar tidak boleh melebihi 2MB.")
+        return image
 
     def save(self, request):
         # Let allauth create the user (email & password)
@@ -181,6 +190,14 @@ class CustomAccountUpdateForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError("Nama panggilan sudah dipakai.")
         return nick
+    
+    def clean_profile_image(self):
+        image = self.cleaned_data.get('profile_image', False)
+        if image:
+            # Limit to 2MB
+            if image.size > 2 * 1024 * 1024:
+                raise ValidationError("Ukuran gambar tidak boleh melebihi 2MB.")
+        return image
 
 # Buat nambah help text di change password
 class CustomPasswordChangeForm(PasswordChangeForm):
