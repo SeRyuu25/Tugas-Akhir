@@ -31,7 +31,8 @@ class CustomSignupForm(SignupForm):
     profile_image = forms.ImageField(
         label="Foto Profil",
         required=False,
-        widget=forms.ClearableFileInput(attrs={'class':'form-control'})
+        widget=forms.ClearableFileInput(attrs={'class':'form-control'}),
+        help_text="Ukuran file maksimal 2MB. Format yang disarankan: JPG, PNG.",
     )
 
     def __init__(self, *args, **kwargs):
@@ -183,6 +184,9 @@ class CustomAccountUpdateForm(forms.ModelForm):
     class Meta:
         model  = CustomUser
         fields = ['profile_image', 'nickname', 'real_name']
+        help_texts = {
+            'profile_image': "Ukuran file maksimal 2MB. Format yang disarankan: JPG, PNG."
+        }
 
     def clean_nickname(self):
         nick = self.cleaned_data.get("nickname")

@@ -28,6 +28,9 @@
         <label for="profile_image" class="btn btn-outline-primary rounded mt-3 w-100" style="text-align: center;">Ubah Foto Profil</label>
         
         <div id="image-error" class="text-danger text-center mt-1"></div>
+        {% if form.profile_image.help_text %}
+          <div class="form-text text-center mt-1">{{ form.profile_image.help_text }}</div>
+        {% endif %}
       </div>
       
       {% if form.profile_image.errors %}

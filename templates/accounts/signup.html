@@ -55,7 +55,10 @@
     <div class="mb-3">
       <label for="{{ form.profile_image.id_for_label }}" class="form-label">Foto Profil</label>
       {{ form.profile_image }}
-      <div id="image-error" class="text-danger mt-1"></div> 
+      <div id="image-error" class="text-danger mt-1"></div>
+      {% if form.profile_image.help_text %}
+        <div class="form-text mt-1">{{ form.profile_image.help_text }}</div>
+      {% endif %}
       {% if form.profile_image.errors %}
         <div class="text-danger">{{ form.profile_image.errors }}</div>
       {% endif %}

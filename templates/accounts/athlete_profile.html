@@ -44,8 +44,11 @@
     <h3>Turnamen Mendatang</h3>
     <div class="list-group">
       {% for tournament in upcoming_tournaments %}
-        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
-          {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <span>
+            {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+          </span>
+          <span class="fs-4 text-muted">&rarr;</span>
         </a>
       {% empty %}
         <div class="list-group-item">Belum mendaftar ke turnamen mendatang.</div>
@@ -57,8 +60,11 @@
     <h3>Turnamen Terakhir</h3>
     <div class="list-group">
       {% for tournament in finished_tournaments %}
-        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
-          {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <span>
+            {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+          </span>
+          <span class="fs-4 text-muted">&rarr;</span>
         </a>
       {% empty %}
         <div class="list-group-item">Belum ada turnamen yang selesai.</div>
@@ -87,9 +93,12 @@
                 
                 {% with winner=match.winner rh=match|get_rating:athlete_profile %}
                   <tr data-bs-toggle="collapse" data-bs-target="#match-details-{{ match.id }}" aria-expanded="false" aria-controls="match-details-{{ match.id }}" style="cursor: pointer;">
-                    <td class="align-middle text-start">
-                      {{ match.tournament.name }}<br>
-                      <small class="text-muted">Ronde : {{ match.context_label }}</small>
+                    <td class="align-middle text-start d-flex align-items-center">
+                      <span class="me-3 text-primary">&rtrif;</span>
+                      <div>
+                        {{ match.tournament.name }}<br>
+                        <small class="text-muted">Ronde : {{ match.context_label }}</small>
+                      </div>
                     </td>
                     <td class="text-center align-middle">
                       {% if winner %}{% if winner == athlete_profile %}<span class="badge bg-success">Menang</span>{% else %}<span class="badge bg-danger">Kalah</span>{% endif %}{% else %}<span class="badge bg-secondary">Belum Selesai</span>{% endif %}
@@ -139,9 +148,12 @@
                 {# ... The same two-row structure as above ... #}
                 {% with winner=match.winner rh=match|get_rating:athlete_profile %}
                   <tr data-bs-toggle="collapse" data-bs-target="#match-details-{{ match.id }}" aria-expanded="false" aria-controls="match-details-{{ match.id }}" style="cursor: pointer;">
-                    <td class="align-middle text-start">
-                      {{ match.tournament.name }}<br>
-                      <small class="text-muted">Ronde : {{ match.context_label }}</small>
+                    <td class="align-middle text-start d-flex align-items-center">
+                      <span class="me-3 text-primary">&rtrif;</span>
+                      <div>
+                        {{ match.tournament.name }}<br>
+                        <small class="text-muted">Ronde : {{ match.context_label }}</small>
+                      </div>
                     </td>
                     <td class="text-center align-middle">
                       {% if winner %}{% if winner == athlete_profile %}<span class="badge bg-success">Menang</span>{% else %}<span class="badge bg-danger">Kalah</span>{% endif %}{% else %}<span class="badge bg-secondary">Belum Selesai</span>{% endif %}

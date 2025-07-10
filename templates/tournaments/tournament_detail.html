@@ -73,6 +73,29 @@
   </div>
   {% endif %}
 
+  {% if pool_winners %}
+  <div class="my-4">
+    <h3 class="mb-3">Pemenang Babak Pool</h3>
+    <div class="row">
+      {% for item in pool_winners %}
+        <div class="col-md-4 col-6 mb-3">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h6 class="card-title text-muted">{{ item.pool_name }}</h6>
+              {% if item.winner.user.profile_image %}
+                <img src="{{ item.winner.user.profile_image.url }}" class="rounded-circle my-2" style="width:60px; height:60px; object-fit:cover;" alt="{{ item.winner.user.nickname }}">
+              {% else %}
+                <img src="{% static 'images/default_profile.jpg' %}" class="rounded-circle my-2" style="width:60px; height:60px; object-fit:cover;" alt="Default profile">
+              {% endif %}
+              <p class="card-text fw-bold mb-0">{{ item.winner.user.nickname }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <h3>Atlet Terdaftar ({{ tournament.participants.count }}/{{ tournament.player_limit }})</h3>
   <div class="row mb-4 mt-3">
     {% for athlete in tournament.participants.all %}
@@ -114,7 +137,7 @@
           </div>
         {% endfor %}
 
-        <h3 class="mt-5 border-top pt-4">Babak Pool</h3>
+        <h3 class="mt-4 border-top pt-3">Babak Pool</h3>
         {% for item in pools_with_matches %}
           <div class="mb-4">
             <h4>{{ item.pool.name }}</h4>

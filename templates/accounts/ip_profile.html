@@ -38,8 +38,11 @@
     <h3>Turnamen yang Anda Buat</h3>
     <ul class="list-group">
       {% for tournament in tournaments_hosted %}
-        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action">
-          {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+        <a href="{% url 'tournaments:tournament_detail' tournament.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <span>
+            {{ tournament.name }} - <small class="text-muted">{{ tournament.start_date }}</small>
+          </span>
+          <span class="fs-4 text-muted">&rarr;</span>
         </a>
       {% empty %}
         <li class="list-group-item">Belum ada turnamen yang Anda buat.</li>

@@ -54,6 +54,7 @@ def tournament_detail(request, tournament_id):
     rounds = {}
     pools_with_matches = []
     final_results = {}
+    pool_winners = []
 
     # Kalo turnament udh beres, display hasil ordernya reverse (dari final dulu)
     if tournament.is_finished:
@@ -66,6 +67,9 @@ def tournament_detail(request, tournament_id):
                     'pool': pool, 
                     'matches': pool.matches.all().order_by('id')
                 })
+                winner = get_pool_winner(pool)
+                if winner:
+                    pool_winners.append({'pool_name': pool.name, 'winner': winner})
         else: # Buat yg sistem gugur
             for match in tournament.matches.all().order_by('-round', 'id'):
                 rounds.setdefault(match.round, []).append(match)
@@ -84,6 +88,10 @@ def tournament_detail(request, tournament_id):
                     'matches': pool.matches.all().order_by('id')
                 })
             if tournament.stage == 'knockout':
+                for pool in all_pools:
+                    winner = get_pool_winner(pool)
+                    if winner:
+                        pool_winners.append({'pool_name': pool.name, 'winner': winner})
                 for match in tournament.matches.filter(pool__isnull=True).order_by('round', 'id'):
                     rounds.setdefault(match.round, []).append(match)
 
@@ -113,6 +121,7 @@ def tournament_detail(request, tournament_id):
         'pools_with_matches': pools_with_matches,
         'first_round_exists': first_round_exists,
         'final_results': final_results,
+        'pool_winners': pool_winners,
     })
 
 # View kalo ada atlet yang daftar ke suatu upcoming turney
