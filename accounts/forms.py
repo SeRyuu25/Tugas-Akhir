@@ -53,7 +53,31 @@ class CustomSignupForm(SignupForm):
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
-        # Buat cek email udh kepake ato belom
+        if not email:
+            return email
+
+        typo_domains = {
+            'gmai.com': 'gmail.com',
+            'gmal.com': 'gmail.com',
+            'gmail.om': 'gmail.com',
+            'gmail.cm': 'gmail.com',
+            'gmail.co': 'gmail.com',
+            'yaho.com': 'yahoo.com',
+            'hotmail.co': 'hotmail.com',
+        }
+
+        try:
+            domain = email.split('@')[1].lower()
+            if domain in typo_domains:
+                corrected_domain = typo_domains[domain]
+                raise forms.ValidationError(
+                    f"Domain email salah. Apakah yang Anda maksud '@{corrected_domain}'? Mohon periksa kembali email Anda."
+                )
+        # ini kalau tidak ada simbol @
+        except IndexError:
+            raise forms.ValidationError("Masukkan alamat email yang valid.")
+
+        # Buat cek email udh dipake di akun laen ato engga
         if EmailAddress.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(
                 "Alamat email ini sudah terdaftar. Silakan gunakan email lain."
@@ -141,15 +165,32 @@ class IPAccountCreationForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
-        if email:
-            email = email.lower()
-            if EmailAddress.objects.filter(email__iexact=email).exists() or \
-               CustomUser.objects.filter(email__iexact=email).exists():
-                raise forms.ValidationError(
-                    "Alamat email ini sudah terdaftar atau sedang digunakan. Silakan gunakan email lain."
-                )
-        else:
+        if not email:
              raise forms.ValidationError("Alamat email wajib diisi.")
+        email = email.lower()
+
+        typo_domains = {
+            'gmai.com': 'gmail.com',
+            'gmal.com': 'gmail.com',
+            'gmail.om': 'gmail.com',
+            'gmail.cm': 'gmail.com',
+            'gmail.co': 'gmail.com',
+            'yaho.com': 'yahoo.com',
+            'hotmail.co': 'hotmail.com',
+        }
+        
+        try:
+            domain = email.split('@')[1]
+            if domain in typo_domains:
+                raise forms.ValidationError(
+                    f"Domain email salah. Apakah maksud Anda '@{typo_domains[domain]}'? Mohon periksa kembali."
+                )
+        except IndexError:
+            raise forms.ValidationError("Masukkan alamat email yang valid.")
+
+        if EmailAddress.objects.filter(email__iexact=email).exists() or \
+           CustomUser.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Alamat email ini sudah terdaftar.")
         return email
 
     def save(self, commit=True):

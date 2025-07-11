@@ -221,4 +221,21 @@
 
   {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create a URL object to easily access search parameters
+    const url = new URL(window.location.href);
+
+    // Check if the page was loaded from the record_match view
+    if (url.searchParams.get('source') === 'record_match') {
+        // Get the clean URL (without the "?source=record_match" part)
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        
+        // Replace the current entry in the browser's history with the clean URL
+        // This makes the "back" button skip the record_match page
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+});
+</script>
 {% endblock %}

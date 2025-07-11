@@ -28,6 +28,7 @@
     <div class="mb-3">
       <label for="{{ form.email.id_for_label }}" class="form-label">Email / Gmail</label>
       {{ form.email }}
+      <div id="email-suggestion" class="form-text mt-1"></div>
       {% if form.email.errors %}
         <div class="text-danger">{{ form.email.errors }}</div>
       {% endif %}
@@ -37,6 +38,7 @@
     <div class="mb-3">
       <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
       {{ form.password1 }}
+      <div id="password-feedback" class="form-text mt-1"></div>
       {% if form.password1.errors %}
         <div class="text-danger">{{ form.password1.errors }}</div>
       {% endif %}
@@ -53,4 +55,56 @@
     <button type="submit" class="btn btn-primary">Buat Akun IP</button>
   </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // REAL-TIME EMAIL TYPO VALIDATION
+    const emailInput = document.getElementById('id_email');
+    const suggestionDiv = document.getElementById('email-suggestion');
+    if (emailInput && suggestionDiv) {
+        emailInput.addEventListener('blur', function() {
+            Mailcheck.run({
+                email: this.value,
+                suggested: function(suggestion) {
+                    suggestionDiv.innerHTML = `Apakah maksud Anda <a href="#" id="suggestion-link" class="text-decoration-underline">${suggestion.full}</a>?`;
+                    document.getElementById('suggestion-link').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        emailInput.value = suggestion.full;
+                        suggestionDiv.innerHTML = '';
+                    });
+                },
+                empty: function() {
+                    suggestionDiv.innerHTML = '';
+                }
+            });
+        });
+    }
+
+    // REAL-TIME PASSWORD VALIDATION
+    const passwordInput = document.getElementById('id_password1');
+    const passwordFeedbackDiv = document.getElementById('password-feedback');
+    if (passwordInput && passwordFeedbackDiv) {
+        const validatePassword = () => {
+            const password = passwordInput.value;
+            let errors = [];
+            if (password.length > 0 && password.length < 8) errors.push('Harus setidaknya 8 karakter.');
+            if (/^\d+$/.test(password)) errors.push('Tidak boleh hanya berisi angka.');
+
+            if (errors.length > 0) {
+                passwordInput.classList.remove('is-valid');
+                passwordInput.classList.add('is-invalid');
+                passwordFeedbackDiv.innerHTML = `<span class="text-danger">${errors.join(' ')}</span>`;
+            } else if (password.length > 0) {
+                passwordInput.classList.remove('is-invalid');
+                passwordInput.classList.add('is-valid');
+                passwordFeedbackDiv.innerHTML = '<span class="text-success">Kata sandi terlihat bagus!</span>';
+            } else {
+                passwordInput.classList.remove('is-valid', 'is-invalid');
+                passwordFeedbackDiv.innerHTML = '';
+            }
+        };
+        passwordInput.addEventListener('blur', validatePassword);
+    }
+});
+</script>
 {% endblock %}

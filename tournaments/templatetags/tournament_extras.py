@@ -32,7 +32,7 @@ def get_final_round(player_limit):
 @register.filter
 def get_rating(match, athlete):
     try:
-        return match.ratinghistory_set.get(athlete=athlete)
+        return match.ratinghistory_set.filter(athlete=athlete).first()
     except RatingHistory.DoesNotExist:
         return None
     

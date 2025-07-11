@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+from django.urls import reverse
 from .forms import TournamentForm, MatchForm
 from .models import Tournament, Match, TournamentPool, round_label
 from accounts.models import AthleteProfile
@@ -322,7 +323,8 @@ def record_match(request, tournament_id, match_id):
                     generate_next_round(tournament, match.round, request)
 
             messages.success(request, "Hasil pertandingan berhasil disimpan.")
-            return redirect('tournaments:tournament_detail', tournament_id=tournament.id)
+            redirect_url = f"{reverse('tournaments:tournament_detail', args=[tournament.id])}?source=record_match"
+            return redirect(redirect_url)
         else:
             # If the form is not valid, show the errors
             messages.error(request, "Terdapat error pada data yang dimasukkan. Mohon periksa kembali skor.")

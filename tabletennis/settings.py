@@ -177,6 +177,7 @@ ACCOUNT_ADAPTER = 'accounts.adapter.MyAccountAdapter'
 ACCOUNT_FORMS = {
     'signup': 'accounts.forms.CustomSignupForm',
 }
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 
 
 # redirect URLs

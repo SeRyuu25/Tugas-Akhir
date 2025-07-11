@@ -11,6 +11,7 @@
     <div class="mb-3">
       <label for="{{ form.email.id_for_label }}" class="form-label">Email / Gmail</label>
       {{ form.email }}
+      <div id="email-suggestion" class="form-text mt-1"></div>
       {% if form.email.errors %}
         <div class="text-danger">{{ form.email.errors }}</div>
       {% endif %}
@@ -70,7 +71,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- 1. FILE SIZE VALIDATION ---
+    // FILE SIZE VALIDATION
     const imageInput = document.getElementById('id_profile_image');
     const imageErrorDiv = document.getElementById('image-error');
     const form = imageInput.closest('form');
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- 2. REAL-TIME PASSWORD VALIDATION ---
+    // REAL-TIME PASSWORD VALIDATION
     const passwordInput = document.getElementById('id_password1');
     const passwordFeedbackDiv = document.getElementById('password-feedback');
 
@@ -121,6 +122,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         passwordInput.addEventListener('blur', validatePassword);
+    }
+
+    // EMAIL TYPO SUGGESTION using mailcheck.js
+    const emailInput = document.getElementById('id_email');
+    const suggestionDiv = document.getElementById('email-suggestion');
+
+    if (emailInput && suggestionDiv) {
+        emailInput.addEventListener('blur', function() {
+            Mailcheck.run({
+                email: this.value,
+                suggested: function(suggestion) {
+                    suggestionDiv.innerHTML = `Apakah maksud Anda <a href="#" id="suggestion-link" class="text-decoration-underline">${suggestion.full}</a>?`;
+                    document.getElementById('suggestion-link').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        emailInput.value = suggestion.full;
+                        suggestionDiv.innerHTML = '';
+                    });
+                },
+                empty: function() {
+                    suggestionDiv.innerHTML = '';
+                }
+            });
+        });
     }
 });
 </script>
