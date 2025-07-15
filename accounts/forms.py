@@ -98,21 +98,6 @@ class CustomSignupForm(SignupForm):
                 raise ValidationError("Ukuran gambar tidak boleh melebihi 2MB.")
         return image
 
-    def save(self, request):
-        # Let allauth create the user (email & password)
-        user = super().save(request)
-
-        """"
-        # Now save our extra fields
-        user.nickname      = self.cleaned_data['nickname']
-        user.real_name     = self.cleaned_data['real_name']
-        if self.cleaned_data.get('profile_image'):
-            user.profile_image = self.cleaned_data['profile_image']
-        user.save()
-        """
-
-        return user
-
 # Buat cek dari referensi atlet (pas pendaftaran atlet)
 class ReferenceCheckForm(forms.Form):
     nickname = forms.CharField(max_length=100, label="Nama Panggilan")

@@ -32,6 +32,7 @@
     <div class="mb-3">
       <label for="{{ form.password2.id_for_label }}" class="form-label">Konfirmasi Kata Sandi</label>
       {{ form.password2 }}
+      <div id="confirm-password-feedback" class="form-text mt-1"></div>
       {% if form.password2.errors %}
         <div class="text-danger">{{ form.password2.errors }}</div>
       {% endif %}
@@ -122,6 +123,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         passwordInput.addEventListener('blur', validatePassword);
+    }
+
+    // REAL-TIME PASSWORD CONFIRMATION VALIDATION
+    const passwordInput = document.getElementById('id_password1');
+    const confirmPasswordInput = document.getElementById('id_password2');
+    const confirmPasswordFeedbackDiv = document.getElementById('confirm-password-feedback');
+
+    if (passwordInput && confirmPasswordInput && confirmPasswordFeedbackDiv) {
+        const validateConfirmPassword = () => {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword.length > 0) {
+                if (password === confirmPassword) {
+                    confirmPasswordInput.classList.remove('is-invalid');
+                    confirmPasswordInput.classList.add('is-valid');
+                    confirmPasswordFeedbackDiv.innerHTML = '<span class="text-success">Kata sandi cocok!</span>';
+                } else {
+                    confirmPasswordInput.classList.remove('is-valid');
+                    confirmPasswordInput.classList.add('is-invalid');
+                    confirmPasswordFeedbackDiv.innerHTML = '<span class="text-danger">Kata sandi tidak cocok.</span>';
+                }
+            } else {
+                confirmPasswordInput.classList.remove('is-valid', 'is-invalid');
+                confirmPasswordFeedbackDiv.innerHTML = '';
+            }
+        };
+        // Run validation on both fields' input
+        passwordInput.addEventListener('keyup', validateConfirmPassword);
+        confirmPasswordInput.addEventListener('keyup', validateConfirmPassword);
     }
 
     // EMAIL TYPO SUGGESTION using mailcheck.js
