@@ -300,7 +300,7 @@ def request_email_change(request):
         # Cek apakah spam
         if is_rate_limited(request.user.id):
                 messages.error(request, "Terlalu banyak permintaan OTP. Mohon tunggu sebentar lalu coba kembali.")
-                return redirect('request_email_change')
+                return redirect('account_security_settings')
         
         otp = generate_otp()
 

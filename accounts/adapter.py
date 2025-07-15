@@ -17,15 +17,6 @@ def generate_unique_username(length=8):
 
 # Adapter buat bikin akun atlet
 class MyAccountAdapter(DefaultAccountAdapter):
-    # Buat cek nama panggilan harus unik (tidak tergantung besar / kecil huruf)
-    def clean_nickname(self, nickname):
-        qs = CustomUser.objects.filter(nickname__iexact=nickname)
-        if hasattr(self.request, 'user') and self.request.user.is_authenticated:
-            qs = qs.exclude(pk=self.request.user.pk)
-        if qs.exists():
-            raise ValidationError("Nama panggilan sudah dipakai.")
-        return nickname
-
     # Buat simpan akun atlet baru
     def save_user(self, request, user, form, commit=True):
         user.role = 'atlet'

@@ -51,6 +51,12 @@ class CustomSignupForm(SignupForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control'})
 
+    def clean_nickname(self):
+        nickname = self.cleaned_data.get('nickname')
+        if nickname and CustomUser.objects.filter(nickname__iexact=nickname).exists():
+            raise forms.ValidationError("Nama panggilan sudah dipakai.")
+        return nickname
+
     def clean_email(self):
         email = self.cleaned_data.get("email")
         if not email:
